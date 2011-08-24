@@ -10,7 +10,7 @@
 #include <assert.h>
 
 //****************************************************************************
-taa_INLINE void taa_mat33_add(
+taa_INLINE static void taa_mat33_add(
     const taa_mat33* a,
     const taa_mat33* b,
     taa_mat33* mout)
@@ -21,7 +21,7 @@ taa_INLINE void taa_mat33_add(
 }
 
 //****************************************************************************
-taa_INLINE float taa_mat33_determinant(
+taa_INLINE static float taa_mat33_determinant(
     const taa_mat33* m)
 {
     return   m->x.x * m->y.y * m->z.z
@@ -33,7 +33,7 @@ taa_INLINE float taa_mat33_determinant(
 }
 
 //****************************************************************************
-taa_INLINE void taa_mat33_from_axisangle(
+taa_INLINE static void taa_mat33_from_axisangle(
     float rad, 
     const taa_vec3* axis,
     taa_mat33* mout)
@@ -54,7 +54,7 @@ taa_INLINE void taa_mat33_from_axisangle(
 }
 
 //****************************************************************************
-taa_INLINE void taa_mat33_from_mat44(
+taa_INLINE static void taa_mat33_from_mat44(
     const taa_mat44* a,
     taa_mat33* mout)
 {
@@ -64,7 +64,7 @@ taa_INLINE void taa_mat33_from_mat44(
 }
 
 //****************************************************************************
-taa_INLINE void taa_mat33_from_pitch(
+taa_INLINE static void taa_mat33_from_pitch(
     float pitch,
     taa_mat33* mout)
 {
@@ -81,7 +81,7 @@ taa_INLINE void taa_mat33_from_pitch(
 }
 
 //****************************************************************************
-taa_INLINE void taa_mat33_from_quat(
+taa_INLINE static void taa_mat33_from_quat(
     const taa_quat* q,
     taa_mat33* mout)
 {
@@ -101,7 +101,7 @@ taa_INLINE void taa_mat33_from_quat(
 }
 
 //****************************************************************************
-taa_INLINE void taa_mat33_from_roll(
+taa_INLINE static void taa_mat33_from_roll(
     float roll,
     taa_mat33* mout)
 {
@@ -118,7 +118,7 @@ taa_INLINE void taa_mat33_from_roll(
 }
 
 //****************************************************************************
-taa_INLINE void taa_mat33_from_scale(
+taa_INLINE static void taa_mat33_from_scale(
     const taa_vec3* scale,
     taa_mat33* mout)
 {
@@ -129,7 +129,7 @@ taa_INLINE void taa_mat33_from_scale(
 }
 
 //****************************************************************************
-taa_INLINE void taa_mat33_from_yaw(
+taa_INLINE static void taa_mat33_from_yaw(
     float yaw,
     taa_mat33* mout)
 {
@@ -146,7 +146,7 @@ taa_INLINE void taa_mat33_from_yaw(
 }
 
 //****************************************************************************
-taa_INLINE void taa_mat33_identity(
+taa_INLINE static void taa_mat33_identity(
     taa_mat33* mout)
 {
     // columns
@@ -156,7 +156,7 @@ taa_INLINE void taa_mat33_identity(
 }
 
 //****************************************************************************
-taa_INLINE void taa_mat33_inverse(
+taa_INLINE static void taa_mat33_inverse(
     const taa_mat33* a,
     taa_mat33* mout)
 {
@@ -174,7 +174,7 @@ taa_INLINE void taa_mat33_inverse(
 }
 
 //****************************************************************************
-taa_INLINE void taa_mat33_multiply(
+taa_INLINE static void taa_mat33_multiply(
     const taa_mat33* a,
     const taa_mat33* b,
     taa_mat33* mout)
@@ -193,7 +193,7 @@ taa_INLINE void taa_mat33_multiply(
 }
 
 //****************************************************************************
-taa_INLINE void taa_mat33_orthonormalize(
+taa_INLINE static void taa_mat33_orthonormalize(
     const taa_mat33* a,
     taa_mat33* mout)
 {
@@ -217,7 +217,7 @@ taa_INLINE void taa_mat33_orthonormalize(
 }
 
 //****************************************************************************
-taa_INLINE void taa_mat33_scale(
+taa_INLINE static void taa_mat33_scale(
     const taa_mat33* a,
     float x,
     taa_mat33* mout)
@@ -228,7 +228,7 @@ taa_INLINE void taa_mat33_scale(
 }
 
 //****************************************************************************
-taa_INLINE void taa_mat33_subtract(
+taa_INLINE static void taa_mat33_subtract(
     const taa_mat33* a,
     const taa_mat33* b,
     taa_mat33* mout)
@@ -239,7 +239,7 @@ taa_INLINE void taa_mat33_subtract(
 }
 
 //****************************************************************************
-taa_INLINE void taa_mat33_transform_vec3(
+taa_INLINE static void taa_mat33_transform_vec3(
     const taa_mat33* a,
     const taa_vec3* b,
     taa_vec3* vout)
@@ -252,7 +252,7 @@ taa_INLINE void taa_mat33_transform_vec3(
 }
 
 //****************************************************************************
-taa_INLINE void taa_mat33_transpose(
+taa_INLINE static void taa_mat33_transpose(
     const taa_mat33* a,
     taa_mat33* mout)
 {

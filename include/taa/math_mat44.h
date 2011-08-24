@@ -10,7 +10,7 @@
 #include <assert.h>
 
 //****************************************************************************
-taa_INLINE void taa_mat44_add(
+taa_INLINE static void taa_mat44_add(
     const taa_mat44* a,
     const taa_mat44* b,
     taa_mat44* mout)
@@ -22,7 +22,7 @@ taa_INLINE void taa_mat44_add(
 }
 
 //****************************************************************************
-taa_INLINE float taa_mat44_determinant(
+taa_INLINE static float taa_mat44_determinant(
     const taa_mat44* a)
 {
     return  a->w.x * a->z.y * a->y.z * a->x.w
@@ -52,7 +52,7 @@ taa_INLINE float taa_mat44_determinant(
 }
 
 //****************************************************************************
-taa_INLINE void taa_mat44_from_axisangle(
+taa_INLINE static void taa_mat44_from_axisangle(
     float rad,
     const taa_vec4* axis,
     taa_mat44* mout)
@@ -78,7 +78,7 @@ taa_INLINE void taa_mat44_from_axisangle(
 }
 
 //****************************************************************************
-taa_INLINE void taa_mat44_from_mat33(
+taa_INLINE static void taa_mat44_from_mat33(
     const taa_mat33* a,
     taa_mat44* mout)
 {
@@ -89,7 +89,7 @@ taa_INLINE void taa_mat44_from_mat33(
 }
 
 //****************************************************************************
-taa_INLINE void taa_mat44_from_pitch(
+taa_INLINE static void taa_mat44_from_pitch(
     float pitch,
     taa_mat44* mout)
 {
@@ -108,7 +108,7 @@ taa_INLINE void taa_mat44_from_pitch(
 }
 
 //****************************************************************************
-taa_INLINE void taa_mat44_from_quat(
+taa_INLINE static void taa_mat44_from_quat(
     const taa_quat* q,
     taa_mat44* mout)
 {
@@ -129,7 +129,7 @@ taa_INLINE void taa_mat44_from_quat(
 }
 
 //****************************************************************************
-taa_INLINE void taa_mat44_from_roll(
+taa_INLINE static void taa_mat44_from_roll(
     float roll,
     taa_mat44* mout)
 {
@@ -148,7 +148,7 @@ taa_INLINE void taa_mat44_from_roll(
 }
 
 //****************************************************************************
-taa_INLINE void taa_mat44_from_scale(
+taa_INLINE static void taa_mat44_from_scale(
     const taa_vec4 *scale,
     taa_mat44* mout)
 {
@@ -160,7 +160,7 @@ taa_INLINE void taa_mat44_from_scale(
 }
 
 //****************************************************************************
-taa_INLINE void taa_mat44_from_translate(
+taa_INLINE static void taa_mat44_from_translate(
     const taa_vec4* v,
     taa_mat44* mout)
 {
@@ -172,7 +172,7 @@ taa_INLINE void taa_mat44_from_translate(
 }
 
 //****************************************************************************
-taa_INLINE void taa_mat44_from_yaw(
+taa_INLINE static void taa_mat44_from_yaw(
     float yaw,
     taa_mat44* mout)
 {
@@ -191,7 +191,7 @@ taa_INLINE void taa_mat44_from_yaw(
 }
 
 //****************************************************************************
-taa_INLINE void taa_mat44_identity(
+taa_INLINE static void taa_mat44_identity(
     taa_mat44* mout)
 {
     // columns
@@ -202,7 +202,7 @@ taa_INLINE void taa_mat44_identity(
 }
 
 //****************************************************************************
-taa_INLINE void taa_mat44_inverse(
+taa_INLINE static void taa_mat44_inverse(
     const taa_mat44* a,
     taa_mat44* mout)
 {
@@ -278,7 +278,7 @@ taa_INLINE void taa_mat44_inverse(
 }
 
 //****************************************************************************
-taa_INLINE void taa_mat44_lookat(
+taa_INLINE static void taa_mat44_lookat(
     const taa_vec4* eye,
     const taa_vec4* target,
     const taa_vec4* up,
@@ -307,7 +307,7 @@ taa_INLINE void taa_mat44_lookat(
 }
 
 //****************************************************************************
-taa_INLINE void taa_mat44_multiply(
+taa_INLINE static void taa_mat44_multiply(
     const taa_mat44* a,
     const taa_mat44* b,
     taa_mat44* mout)
@@ -381,7 +381,7 @@ taa_INLINE void taa_mat44_multiply(
 }
 
 //****************************************************************************
-taa_INLINE void taa_mat44_orthonormalize(
+taa_INLINE static void taa_mat44_orthonormalize(
     const taa_mat44* a,
     taa_mat44* mout)
 {
@@ -414,7 +414,7 @@ taa_INLINE void taa_mat44_orthonormalize(
 }
 
 //****************************************************************************
-taa_INLINE void taa_mat44_perspective(
+taa_INLINE static void taa_mat44_perspective(
     float fovy,
     float aspect,
     float znear,
@@ -432,7 +432,7 @@ taa_INLINE void taa_mat44_perspective(
 }
 
 //****************************************************************************
-taa_INLINE void taa_mat44_scale(
+taa_INLINE static void taa_mat44_scale(
     const taa_mat44* a,
     float x,
     taa_mat44* mout)
@@ -444,7 +444,7 @@ taa_INLINE void taa_mat44_scale(
 }
 
 //****************************************************************************
-taa_INLINE void taa_mat44_subtract(
+taa_INLINE static void taa_mat44_subtract(
     const taa_mat44* a,
     const taa_mat44* b,
     taa_mat44* mout)
@@ -456,7 +456,7 @@ taa_INLINE void taa_mat44_subtract(
 }
 
 //****************************************************************************
-taa_INLINE void taa_mat44_transform_vec3(
+taa_INLINE static void taa_mat44_transform_vec3(
     const taa_mat44* a,
     const taa_vec3* b,
     taa_vec3* vout)
@@ -469,7 +469,7 @@ taa_INLINE void taa_mat44_transform_vec3(
 }
 
 //****************************************************************************
-taa_INLINE void taa_mat44_transform_vec4(
+taa_INLINE static void taa_mat44_transform_vec4(
     const taa_mat44* a,
     const taa_vec4* b,
     taa_vec4* vout)
@@ -483,7 +483,7 @@ taa_INLINE void taa_mat44_transform_vec4(
 }
 
 //****************************************************************************
-taa_INLINE void taa_mat44_transpose(
+taa_INLINE static void taa_mat44_transpose(
     const taa_mat44* a,
     taa_mat44* mout)
 {

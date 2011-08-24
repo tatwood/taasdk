@@ -10,7 +10,7 @@
 #include <assert.h>
 
 //****************************************************************************
-taa_INLINE void taa_vec4_add(
+taa_INLINE static void taa_vec4_add(
     const taa_vec4* a,
     const taa_vec4* b,
     taa_vec4* vout)
@@ -22,7 +22,7 @@ taa_INLINE void taa_vec4_add(
 }
 
 //****************************************************************************
-taa_INLINE void taa_vec4_cross3(
+taa_INLINE static void taa_vec4_cross3(
     const taa_vec4* a,
     const taa_vec4* b,
     taa_vec4* vout)
@@ -36,7 +36,7 @@ taa_INLINE void taa_vec4_cross3(
 }
 
 //****************************************************************************
-taa_INLINE void taa_vec4_divide(
+taa_INLINE static void taa_vec4_divide(
     const taa_vec4* a,
     const taa_vec4* b,
     taa_vec4* vout)
@@ -48,7 +48,7 @@ taa_INLINE void taa_vec4_divide(
 }
 
 //****************************************************************************
-taa_INLINE float taa_vec4_dot(
+taa_INLINE static float taa_vec4_dot(
     const taa_vec4* a,
     const taa_vec4* b)
 {
@@ -56,7 +56,7 @@ taa_INLINE float taa_vec4_dot(
 }
 
 //****************************************************************************
-taa_INLINE void taa_vec4_from_mat44_scale(
+taa_INLINE static void taa_vec4_from_mat44_scale(
     const taa_mat44* a,
     taa_vec4* vout)
 {
@@ -67,7 +67,7 @@ taa_INLINE void taa_vec4_from_mat44_scale(
 }
 
 //****************************************************************************
-taa_INLINE void taa_vec4_from_mat44_translate(
+taa_INLINE static void taa_vec4_from_mat44_translate(
     const taa_mat44* a,
     taa_vec4* vout)
 {
@@ -76,14 +76,14 @@ taa_INLINE void taa_vec4_from_mat44_translate(
 }
 
 //****************************************************************************
-taa_INLINE float taa_vec4_length(
+taa_INLINE static float taa_vec4_length(
     const taa_vec4* a)
 {
     return sqrtf(a->x*a->x + a->y*a->y + a->z*a->z + a->w*a->w);
 }
 
 //****************************************************************************
-taa_INLINE void taa_vec4_mix(
+taa_INLINE static void taa_vec4_mix(
     const taa_vec4* a,
     const taa_vec4* b,
     float x,
@@ -96,7 +96,7 @@ taa_INLINE void taa_vec4_mix(
 }
 
 //****************************************************************************
-taa_INLINE void taa_vec4_multiply(
+taa_INLINE static void taa_vec4_multiply(
     const taa_vec4* a,
     const taa_vec4* b,
     taa_vec4* vout)
@@ -108,7 +108,7 @@ taa_INLINE void taa_vec4_multiply(
 }
 
 //****************************************************************************
-taa_INLINE void taa_vec4_negate(
+taa_INLINE static void taa_vec4_negate(
     const taa_vec4* a,
     taa_vec4* vout)
 {
@@ -119,7 +119,7 @@ taa_INLINE void taa_vec4_negate(
 }
 
 //****************************************************************************
-taa_INLINE void taa_vec4_normalize(
+taa_INLINE static void taa_vec4_normalize(
     const taa_vec4* a,
     taa_vec4* vout)
 {
@@ -127,7 +127,7 @@ taa_INLINE void taa_vec4_normalize(
 }
 
 //****************************************************************************
-taa_INLINE void taa_vec4_scale(
+taa_INLINE static void taa_vec4_scale(
     const taa_vec4* a,
     float x,
     taa_vec4* vout)
@@ -139,7 +139,7 @@ taa_INLINE void taa_vec4_scale(
 }
 
 //****************************************************************************
-taa_INLINE void taa_vec4_set(
+taa_INLINE static void taa_vec4_set(
     float x,
     float y,
     float z,
@@ -153,7 +153,7 @@ taa_INLINE void taa_vec4_set(
 }
 
 //****************************************************************************
-taa_INLINE void taa_vec4_subtract(
+taa_INLINE static void taa_vec4_subtract(
     const taa_vec4* a,
     const taa_vec4* b,
     taa_vec4* vout)

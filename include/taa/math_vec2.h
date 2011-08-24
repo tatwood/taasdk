@@ -8,7 +8,7 @@
 #define TAA_MATH_VEC2_H_
 
 //****************************************************************************
-taa_INLINE void taa_vec2_add(
+taa_INLINE static void taa_vec2_add(
     const taa_vec2* a,
     const taa_vec2* b,
     taa_vec2* vout)
@@ -18,7 +18,7 @@ taa_INLINE void taa_vec2_add(
 }
 
 //****************************************************************************
-taa_INLINE float taa_vec2_cross(
+taa_INLINE static float taa_vec2_cross(
     const taa_vec2* a,
     const taa_vec2* b)
 {
@@ -26,7 +26,7 @@ taa_INLINE float taa_vec2_cross(
 }
 
 //****************************************************************************
-taa_INLINE void taa_vec2_divide(
+taa_INLINE static void taa_vec2_divide(
     const taa_vec2* a,
     const taa_vec2* b,
     taa_vec2* vout)
@@ -36,7 +36,7 @@ taa_INLINE void taa_vec2_divide(
 }
 
 //****************************************************************************
-taa_INLINE float taa_vec2_dot(
+taa_INLINE static float taa_vec2_dot(
     const taa_vec2* a,
     const taa_vec2* b)
 {
@@ -44,14 +44,14 @@ taa_INLINE float taa_vec2_dot(
 }
 
 //****************************************************************************
-taa_INLINE float taa_vec2_length(
+taa_INLINE static float taa_vec2_length(
     const taa_vec2* a)
 {
     return sqrtf(a->x*a->x + a->y*a->y);
 }
 
 //****************************************************************************
-taa_INLINE void taa_vec2_mix(
+taa_INLINE static void taa_vec2_mix(
     const taa_vec2* a,
     const taa_vec2* b,
     float x,
@@ -62,7 +62,7 @@ taa_INLINE void taa_vec2_mix(
 }
 
 //****************************************************************************
-taa_INLINE void taa_vec2_multiply(
+taa_INLINE static void taa_vec2_multiply(
     const taa_vec2* a,
     const taa_vec2* b,
     taa_vec2* vout)
@@ -72,7 +72,7 @@ taa_INLINE void taa_vec2_multiply(
 }
 
 //****************************************************************************
-taa_INLINE void taa_vec2_negate(
+taa_INLINE static void taa_vec2_negate(
     const taa_vec2* a,
     taa_vec2* vout)
 {
@@ -81,7 +81,7 @@ taa_INLINE void taa_vec2_negate(
 }
 
 //****************************************************************************
-taa_INLINE void taa_vec2_normalize(
+taa_INLINE static void taa_vec2_normalize(
     const taa_vec2* a,
     taa_vec2* vout)
 {
@@ -89,7 +89,7 @@ taa_INLINE void taa_vec2_normalize(
 }
 
 //****************************************************************************
-taa_INLINE void taa_vec2_scale(
+taa_INLINE static void taa_vec2_scale(
     const taa_vec2* a,
     float x,
     taa_vec2* vout)
@@ -99,7 +99,7 @@ taa_INLINE void taa_vec2_scale(
 }
 
 //****************************************************************************
-taa_INLINE void taa_vec2_set(
+taa_INLINE static void taa_vec2_set(
     float x,
     float y,
     taa_vec2* vout)
@@ -109,7 +109,7 @@ taa_INLINE void taa_vec2_set(
 }
 
 //****************************************************************************
-taa_INLINE void taa_vec2_subtract(
+taa_INLINE static void taa_vec2_subtract(
     const taa_vec2* a,
     const taa_vec2* b,
     taa_vec2* vout)

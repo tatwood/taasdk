@@ -10,7 +10,7 @@
 #include <assert.h>
 
 //****************************************************************************
-taa_INLINE void taa_vec3_add(
+taa_INLINE static void taa_vec3_add(
     const taa_vec3* a,
     const taa_vec3* b,
     taa_vec3* vout)
@@ -21,7 +21,7 @@ taa_INLINE void taa_vec3_add(
 }
 
 //****************************************************************************
-taa_INLINE void taa_vec3_cross(
+taa_INLINE static void taa_vec3_cross(
     const taa_vec3* a,
     const taa_vec3* b,
     taa_vec3* vout)
@@ -34,7 +34,7 @@ taa_INLINE void taa_vec3_cross(
 }
 
 //****************************************************************************
-taa_INLINE void taa_vec3_divide(
+taa_INLINE static void taa_vec3_divide(
     const taa_vec3* a,
     const taa_vec3* b,
     taa_vec3* vout)
@@ -45,7 +45,7 @@ taa_INLINE void taa_vec3_divide(
 }
 
 //****************************************************************************
-taa_INLINE float taa_vec3_dot(
+taa_INLINE static float taa_vec3_dot(
     const taa_vec3* a,
     const taa_vec3* b)
 {
@@ -53,7 +53,7 @@ taa_INLINE float taa_vec3_dot(
 }
 
 //****************************************************************************
-taa_INLINE void taa_vec3_from_mat33_scale(
+taa_INLINE static void taa_vec3_from_mat33_scale(
     const taa_mat33* a,
     taa_vec3* vout)
 {
@@ -63,14 +63,14 @@ taa_INLINE void taa_vec3_from_mat33_scale(
 }
 
 //****************************************************************************
-taa_INLINE float taa_vec3_length(
+taa_INLINE static float taa_vec3_length(
     const taa_vec3* a)
 {
     return sqrtf(a->x*a->x + a->y*a->y + a->z*a->z);
 }
 
 //****************************************************************************
-taa_INLINE void taa_vec3_mix(
+taa_INLINE static void taa_vec3_mix(
     const taa_vec3* a,
     const taa_vec3* b,
     float x,
@@ -82,7 +82,7 @@ taa_INLINE void taa_vec3_mix(
 }
 
 //****************************************************************************
-taa_INLINE void taa_vec3_multiply(
+taa_INLINE static void taa_vec3_multiply(
     const taa_vec3* a,
     const taa_vec3* b,
     taa_vec3* vout)
@@ -93,7 +93,7 @@ taa_INLINE void taa_vec3_multiply(
 }
 
 //****************************************************************************
-taa_INLINE void taa_vec3_negate(
+taa_INLINE static void taa_vec3_negate(
     const taa_vec3* a,
     taa_vec3* vout)
 {
@@ -103,7 +103,7 @@ taa_INLINE void taa_vec3_negate(
 }
 
 //****************************************************************************
-taa_INLINE void taa_vec3_normalize(
+taa_INLINE static void taa_vec3_normalize(
     const taa_vec3* a,
     taa_vec3* vout)
 {
@@ -111,7 +111,7 @@ taa_INLINE void taa_vec3_normalize(
 }
 
 //****************************************************************************
-taa_INLINE void taa_vec3_scale(
+taa_INLINE static void taa_vec3_scale(
     const taa_vec3* a,
     float x,
     taa_vec3* vout)
@@ -122,7 +122,7 @@ taa_INLINE void taa_vec3_scale(
 }
 
 //****************************************************************************
-taa_INLINE void taa_vec3_set(
+taa_INLINE static void taa_vec3_set(
     float x, 
     float y, 
     float z, 
@@ -134,7 +134,7 @@ taa_INLINE void taa_vec3_set(
 }
 
 //****************************************************************************
-taa_INLINE void taa_vec3_subtract(
+taa_INLINE static void taa_vec3_subtract(
     const taa_vec3* a,
     const taa_vec3* b,
     taa_vec3* vout)

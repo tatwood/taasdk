@@ -10,7 +10,7 @@
 #include <assert.h>
 
 //****************************************************************************
-taa_INLINE void taa_quat_add(
+taa_INLINE static void taa_quat_add(
     const taa_quat* a,
     const taa_quat* b,
     taa_quat* qout)
@@ -22,7 +22,7 @@ taa_INLINE void taa_quat_add(
 }
 
 //****************************************************************************
-taa_INLINE void taa_quat_conjugate(
+taa_INLINE static void taa_quat_conjugate(
     const taa_quat* a,
     taa_quat* qout)
 {
@@ -33,7 +33,7 @@ taa_INLINE void taa_quat_conjugate(
 }
 
 //****************************************************************************
-taa_INLINE void taa_quat_from_axisangle(
+taa_INLINE static void taa_quat_from_axisangle(
     float rad,
     const taa_vec4* axis,
     taa_quat* qout)
@@ -47,7 +47,7 @@ taa_INLINE void taa_quat_from_axisangle(
 }
 
 //****************************************************************************
-taa_INLINE void taa_quat_from_mat33(
+taa_INLINE static void taa_quat_from_mat33(
     const taa_mat33* m,
     taa_quat* qout)
 {
@@ -94,7 +94,7 @@ taa_INLINE void taa_quat_from_mat33(
 }
 
 //****************************************************************************
-taa_INLINE void taa_quat_from_mat44(
+taa_INLINE static void taa_quat_from_mat44(
     const taa_mat44* m,
     taa_quat* qout)
 {
@@ -141,7 +141,7 @@ taa_INLINE void taa_quat_from_mat44(
 }
 
 //****************************************************************************
-taa_INLINE void taa_quat_identity(
+taa_INLINE static void taa_quat_identity(
     taa_quat* qout)
 {
     qout->x = 0.0f;
@@ -151,7 +151,7 @@ taa_INLINE void taa_quat_identity(
 }
 
 //****************************************************************************
-taa_INLINE void taa_quat_multiply(
+taa_INLINE static void taa_quat_multiply(
     const taa_quat* a,
     const taa_quat* b,
     taa_quat* qout)
@@ -165,7 +165,7 @@ taa_INLINE void taa_quat_multiply(
 }
 
 //****************************************************************************
-taa_INLINE void taa_quat_multiply_vec3(
+taa_INLINE static void taa_quat_multiply_vec3(
     const taa_quat* a,
     const taa_vec3* b,
     taa_quat* qout)
@@ -178,7 +178,7 @@ taa_INLINE void taa_quat_multiply_vec3(
 }
 
 //****************************************************************************
-taa_INLINE void taa_quat_normalize(
+taa_INLINE static void taa_quat_normalize(
     const taa_quat* a,
     taa_quat* qout)
 {
@@ -187,7 +187,7 @@ taa_INLINE void taa_quat_normalize(
 }
 
 //****************************************************************************
-taa_INLINE void taa_quat_transform_vec3(
+taa_INLINE static void taa_quat_transform_vec3(
     const taa_quat* a,
     const taa_vec3* b,
     taa_vec3* vout)
@@ -205,7 +205,7 @@ taa_INLINE void taa_quat_transform_vec3(
 }
 
 //****************************************************************************
-taa_INLINE void taa_quat_transform_vec4(
+taa_INLINE static void taa_quat_transform_vec4(
     const taa_quat* a,
     const taa_vec4* b,
     taa_vec4* vout)
@@ -223,7 +223,7 @@ taa_INLINE void taa_quat_transform_vec4(
 }
 
 //****************************************************************************
-taa_INLINE void taa_quat_scale(
+taa_INLINE static void taa_quat_scale(
     const taa_quat* a,
     float x,
     taa_quat* qout)

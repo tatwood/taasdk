@@ -7,7 +7,7 @@
 #ifndef TAA_MATH_SCALAR_H_
 #define TAA_MATH_SCALAR_H_
 
-taa_INLINE float taa_clamp(
+taa_INLINE static float taa_clamp(
     float x,
     float min,
     float max)
@@ -15,7 +15,7 @@ taa_INLINE float taa_clamp(
     return (x > min) ? ((x < max) ? x : max) : min;
 }
 
-taa_INLINE int32_t taa_clampi(
+taa_INLINE static int32_t taa_clampi(
     int32_t x,
     int32_t min,
     int32_t max)
@@ -23,20 +23,20 @@ taa_INLINE int32_t taa_clampi(
     return (x > min) ? ((x < max) ? x : max) : min;
 }
 
-taa_INLINE float taa_degrees(
+taa_INLINE static float taa_degrees(
     float radians)
 {
     return radians * (180.0f/taa_PI);
 }
 
-taa_INLINE float taa_max(
+taa_INLINE static float taa_max(
     float a,
     float b)
 {
     return (a > b) ? a : b;
 }
 
-taa_INLINE int32_t taa_maxi(
+taa_INLINE static int32_t taa_maxi(
     int32_t a,
     int32_t b)
 {
@@ -44,21 +44,21 @@ taa_INLINE int32_t taa_maxi(
 }
 
 
-taa_INLINE float taa_min(
+taa_INLINE static float taa_min(
     float a,
     float b)
 {
     return (a < b) ? a : b;
 }
 
-taa_INLINE int32_t taa_mini(
+taa_INLINE static int32_t taa_mini(
     int32_t a,
     int32_t b)
 {
     return (a < b) ? a : b;
 }
 
-taa_INLINE float taa_mix(
+taa_INLINE static float taa_mix(
     float x,
     float y,
     float a)
@@ -66,7 +66,7 @@ taa_INLINE float taa_mix(
     return x*(1.0f - a) + y*a;
 }
 
-taa_INLINE float taa_radians(
+taa_INLINE static float taa_radians(
     float degrees)
 {
     return degrees * (taa_PI/180.0f);

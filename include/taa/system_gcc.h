@@ -28,7 +28,7 @@
 #define taa_BFS32_TARGET(pindex_out, mask) \
     (*(pindex_out) = __builtin_ctz(mask))
 
-#define taa_INLINE_TARGET inline static
+#define taa_INLINE_TARGET inline
 
 #define taa_THREADLOCAL_TARGET __thread
 #define taa_THREADLOCAL_EXTERN_TARGET extern __thread

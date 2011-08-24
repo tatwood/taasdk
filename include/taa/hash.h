@@ -10,7 +10,7 @@
 #include "system.h"
 
 // TODO: should this really be inlined?
-taa_INLINE uint32_t taa_hash_pjw(const char* s)
+taa_INLINE static uint32_t taa_hash_pjw(const char* s)
 {
     // Based on HashPJW
     // http://www.ddj.com/documents/s=962/ddj9604b/
