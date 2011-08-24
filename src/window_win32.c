@@ -503,7 +503,7 @@ void taa_window_update(
     taa_window_state* stateout)
 {
     taa_window_state* state = w->win32.state;
-    uint32_t *numevents = &state->numevents;
+    int32_t *numevents = &state->numevents;
     MSG msg;
 
     *numevents = 0;
