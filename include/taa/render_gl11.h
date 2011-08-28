@@ -134,7 +134,7 @@ taa_INLINE static void taa_texture2d_setparameters(
     taa_texwrap wraps,
     taa_texwrap wrapt)
 {
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, maxmiplevel);
+    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, maxmiplevel);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, minfilter);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, maxfilter);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wraps);
@@ -162,9 +162,9 @@ taa_INLINE static void taa_texture2d_setimage(
         // taa_TEXTURE_LUM8
         { GL_LUMINANCE8, GL_LUMINANCE, GL_UNSIGNED_BYTE },
         // taa_TEXTURE_BGR8
-        { GL_RGB8      , GL_BGR      , GL_UNSIGNED_BYTE },
+        { GL_RGB8      , GL_BGR_EXT  , GL_UNSIGNED_BYTE },
         // taa_TEXTURE_BGRA8
-        { GL_RGBA8     , GL_BGRA     , GL_UNSIGNED_BYTE },
+        { GL_RGBA8     , GL_BGRA_EXT , GL_UNSIGNED_BYTE },
         // taa_TEXTURE_RGB8
         { GL_RGB8      , GL_RGB      , GL_UNSIGNED_BYTE },
         // taa_TEXTURE_RGBA8
