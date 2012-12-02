@@ -1,15 +1,12 @@
 /**
- * @brief     semaphore management header for win32
+ * @brief     semaphore header for win32 target
  * @author    Thomas Atwood (tatwood.net)
  * @date      2011
  * @copyright unlicense / public domain
  ****************************************************************************/
-#ifndef TAA_SEMAPHORE_WIN32_H_
-#define TAA_SEMAPHORE_WIN32_H_
+#ifndef taa_SEMAPHORE_WIN32_H_
+#define taa_SEMAPHORE_WIN32_H_
 
-struct taa_semaphore_s
-{
-    HANDLE win32;
-};
+typedef HANDLE taa_semaphore_target;
 
-#endif // TAA_SEMAPHORE_WIN32_H_
+#endif // taa_SEMAPHORE_WIN32_H_

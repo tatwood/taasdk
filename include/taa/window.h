@@ -4,29 +4,25 @@
  * @date      2011
  * @copyright unlicense / public domain
  ****************************************************************************/
-#ifndef TAA_WINDOW_H_
-#define TAA_WINDOW_H_
+#ifndef taa_WINDOW_H_
+#define taa_WINDOW_H_
 
-#include "keyboard.h"
-#include "mouse.h"
 #include "system.h"
 
-//****************************************************************************
-// typedefs
-
-typedef enum taa_window_eventtype_e taa_window_eventtype;
-
-typedef struct taa_window_mouseevent_s taa_window_mouseevent;
-typedef struct taa_window_keyevent_s taa_window_keyevent;
-typedef union taa_window_event_u taa_window_event;
-
-typedef struct taa_window_display_s taa_window_display;
-typedef struct taa_window_state_s taa_window_state;
-typedef struct taa_window_visualinfo_s taa_window_visualinfo;
-typedef struct taa_window_s taa_window;
+#ifdef WIN32
+#include "window_win32.h"
+#else
+#include "window_x11.h"
+#endif
 
 //****************************************************************************
 // enums
+
+enum
+{
+    taa_WINDOW_BORDERLESS = (1 << 0),
+    taa_WINDOW_FULLSCREEN = (1 << 1)
+};
 
 enum taa_window_eventtype_e
 {
@@ -46,77 +42,92 @@ enum taa_window_eventtype_e
 };
 
 //****************************************************************************
+// typedefs
+
+typedef enum taa_window_eventtype_e taa_window_eventtype;
+
+typedef union taa_window_event_u taa_window_event;
+
+/**
+ * @details On X11, this is a (Display*); on win32, it has no meaning.
+ */
+typedef taa_window_display_target taa_window_display;
+
+/**
+ * @details On X11, this is a (Window); on win32, it is a (HWND).
+ */
+typedef taa_window_target taa_window;
+
+//****************************************************************************
 // structs
-
-struct taa_window_mouseevent_s
-{
-    taa_window_eventtype type;
-    taa_mouse_state state;
-};
-
-struct taa_window_keyevent_s
-{
-    taa_window_eventtype type;
-    uint8_t keycode;
-    char ascii;
-};
 
 union taa_window_event_u
 {
     taa_window_eventtype type;
-    taa_window_keyevent key;
-    taa_window_mouseevent mouse;
-};
-
-struct taa_window_state_s
-{
-    int32_t width;
-    int32_t height;
-    int32_t numevents;
-    taa_keyboard_state kbstate;
-    taa_mouse_state mousestate;
-    taa_window_event events[32];
+    struct
+    {
+        taa_window_eventtype type;
+        uint8_t keycode;
+        char ascii;
+    } key;
+    struct
+    {
+        taa_window_eventtype type;
+        int32_t cursorx;
+        int32_t cursory;
+        int8_t button1;
+        int8_t button2;
+        int8_t button3;
+    } mouse;
+    struct
+    {
+        taa_window_eventtype type;
+        uint32_t width;
+        uint32_t height;
+    } size;
 };
 
 //****************************************************************************
 // functions
 
-taa_EXTERN_C void taa_window_choosevisualinfo(
-    taa_window_display* display,
-    taa_window_visualinfo* viout);
+taa_SDK_LINKAGE void taa_window_close_display(
+    taa_window_display disp);
 
-taa_EXTERN_C void taa_window_closedisplay(
-    taa_window_display* disp);
-
-taa_EXTERN_C void taa_window_create(
-    taa_window_display* disp,
-    taa_window_visualinfo* vi,
+/**
+ * @return 0 on success, -1 on error
+ */
+taa_SDK_LINKAGE int taa_window_create(
+    taa_window_display disp,
     const char* title,
-    int32_t width,
-    int32_t height,
-    taa_window* wout);
+    unsigned int width,
+    unsigned int height,
+    unsigned int flags,
+    taa_window* w_out);
 
-taa_EXTERN_C void taa_window_destroy(
-    taa_window* w);
+taa_SDK_LINKAGE void taa_window_destroy(
+    taa_window_display disp,
+    taa_window win);
 
-taa_EXTERN_C void taa_window_opendisplay(
-    taa_window_display* dispout);
+taa_SDK_LINKAGE void taa_window_get_size(
+    taa_window_display disp,
+    taa_window win,
+    unsigned int* w_out,
+    unsigned int* h_out);
 
-taa_EXTERN_C void taa_window_show(
-    taa_window* w,
-    int32_t visible);
+taa_SDK_LINKAGE taa_window_display taa_window_open_display();
 
-taa_EXTERN_C void taa_window_update(
-    taa_window* w,
-    taa_window_state* stateout);
+taa_SDK_LINKAGE void taa_window_show(
+    taa_window_display disp,
+    taa_window win,
+    int visible);
 
-//****************************************************************************
-// platform includes
+/**
+ * @return the number of events recorded
+ */
+taa_SDK_LINKAGE unsigned int taa_window_update(
+    taa_window_display disp,
+    taa_window win,
+    taa_window_event* events_out,
+    unsigned int maxevents);
 
-#ifdef WIN32
-#include "window_win32.h"
-#else
-#include "window_x11.h"
-#endif
-
-#endif // TAA_WINDOW_H_
+#endif // taa_WINDOW_H_

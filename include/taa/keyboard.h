@@ -1,22 +1,25 @@
 /**
- * @brief     target agnostic header for handling keyboard input
+ * @brief     target agnostic header for keyboard input
  * @author    Thomas Atwood (tatwood.net)
  * @date      2011
  * @copyright unlicense / public domain
  ****************************************************************************/
-#ifndef TAA_KEYBOARD_H_
-#define TAA_KEYBOARD_H_
+#ifndef taa_KEYBOARD_H_
+#define taa_KEYBOARD_H_
 
-#include "stdint.h"
+#include "window.h"
 
-enum
+//****************************************************************************
+// enums
+
+enum taa_keyboard_keycode_e
 {
+    //taa_KEY_BUTTON1         =   1, // left mouse button
+    //taa_KEY_BUTTON2         =   2, // right mouse button
+    //taa_KEY_BUTTON3         =   4, // middle mouse button
     taa_KEY_BACKSPACE       =   8, // Backspace key
     taa_KEY_TAB             =   9, // Tab key
     taa_KEY_ENTER           =  13, // Enter key
-    taa_KEY_SHIFT           =  16, // Shift key
-    taa_KEY_CTRL            =  17, // Control key
-    taa_KEY_ALT             =  18, // Alternate (Option) key
     taa_KEY_PAUSE           =  19, // Pause Break key
     taa_KEY_CAPSLOCK        =  20, // Caps Lock key
     taa_KEY_ESCAPE          =  27, // Escape key
@@ -101,6 +104,12 @@ enum
     taa_KEY_F12             = 123, // F12 key
     taa_KEY_NUMLOCK         = 144, // Num Lock key
     taa_KEY_SCROLL          = 145, // Scroll Lock key
+    taa_KEY_LSHIFT          = 160, // left shift key
+    taa_KEY_RSHIFT          = 161, // right shift key
+    taa_KEY_LCTRL           = 162, // left control key
+    taa_KEY_RCTRL           = 163, // right control key
+    taa_KEY_LALT            = 164, // left alt (option) key
+    taa_KEY_RALT            = 165, // left alt (option) key
     taa_KEY_SEMICOLON       = 186, // ;: key
     taa_KEY_EQUAL           = 187, // =+ key
     taa_KEY_COMMA           = 188, // ,< key
@@ -115,6 +124,44 @@ enum
     taa_KEY_UNKNOWN         = 255
 };
 
-typedef uint8_t taa_keyboard_state[taa_KEY_UNKNOWN + 1];
+//****************************************************************************
+// typedefs
 
-#endif // TAA_KEYBOARD_H_
+typedef enum taa_keyboard_keycode_e taa_keyboard_keycode;
+
+typedef struct taa_keyboard_state_s taa_keyboard_state;
+
+//****************************************************************************
+// structs
+
+struct taa_keyboard_state_s
+{
+    uint8_t keys[256];
+};
+
+//****************************************************************************
+// functions
+
+taa_SDK_LINKAGE void taa_keyboard_query(
+    taa_window_display disp,
+    taa_keyboard_state* kb_out);
+
+/**
+ * translates a native key code into a cross platform value
+ * @param disp handle to the display connection
+ * @param keycode On X11 this is a KeyCode. On win32 it is a VK code
+ * @return the matching taa_keyboard_keycode
+ */
+taa_SDK_LINKAGE uint8_t taa_keyboard_translate(
+    taa_window_display disp,
+    int32_t keycode);
+
+/**
+ * updates an existing keyboard state based on a set of window events
+ */
+taa_SDK_LINKAGE void taa_keyboard_update(
+    const taa_window_event* events,
+    uint32_t numevents,
+    taa_keyboard_state* kb);
+
+#endif // taa_KEYBOARD_H_

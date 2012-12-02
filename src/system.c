@@ -4,9 +4,7 @@
  * @date      2011
  * @copyright unlicense / public domain
  ****************************************************************************/
-#include <taa/system.h>
-
-#define TAA_SYSTEM_C_
+#define taa_SYSTEM_C_
 
 #ifdef WIN32
 #include "system_win32.c"
@@ -14,4 +12,4 @@
 #include "system_posix.c"
 #endif
 
-#undef TAA_SYSTEM_C_
+#undef taa_SYSTEM_C_

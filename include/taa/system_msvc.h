@@ -4,29 +4,21 @@
  * @date      2011
  * @copyright unlicense / public domain
  ****************************************************************************/
-#ifndef TAA_SYSTEM_MSVC_H_
-#define TAA_SYSTEM_MSVC_H_
+#ifndef taa_SYSTEM_MSVC_H_
+#define taa_SYSTEM_MSVC_H_
 
-#define taa_ATOMIC_CMPXCHG32_TARGET(pval, oldval, newval) \
-    InterlockedCompareExchange((LONG*) (pval), newval, oldval)
+#include <xmmintrin.h>
 
-#define taa_ATOMIC_CMPXCHGPTR_TARGET(pptr, oldptr, newptr) \
-    InterlockedCompareExchangePointer (pptr, newptr, oldptr)
+#define taa_ATTRIB_ALIGN_TARGET(align_)
 
-#define taa_ATOMIC_DEC32_TARGET(pval) \
-    InterlockedDecrement((LONG*) (pval))
+#define taa_DECLSPEC_ALIGN_TARGET(align_) __declspec(align(align_))
 
-#define taa_ATOMIC_INC32_TARGET(pval) \
-    InterlockedIncrement((LONG*) (pval))
+#define taa_ATTRIB_MAY_ALIAS_TARGET
 
-#define taa_ATOMIC_XCHG32_TARGET(pval, newval) \
-    InterlockedExchange((LONG*) (pval), newval)
-
-#define taa_ATOMIC_XCHGPTR_TARGET(pptr, newptr) \
-    InterlockedExchangePointer(pptr, newptr)
-
-#define taa_BFS32_TARGET(pindex_out, mask) \
+#define taa_BSF32_TARGET(pindex_out, mask) \
     (_BitScanForward(reinterpret_cast<unsigned long*>(pindex_out), mask))
+
+#define taa_PAUSE_TARGET() _mm_pause()
 
 // MSVC does not support C99 inline keyword
 #define taa_INLINE_TARGET __inline
@@ -44,4 +36,4 @@
 #define taa_THREADLOCAL_EXTERN_TARGET __declspec(thread) extern
 #define taa_THREADLOCAL_STATIC_TARGET __declspec(thread) static
 
-#endif // TAA_SYSTEM_MSVC_H_
+#endif // taa_SYSTEM_MSVC_H_

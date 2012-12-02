@@ -5,28 +5,62 @@
  * @copyright unlicense / public domain
  ****************************************************************************/
 // only compile when included by coroutine.c
-#ifdef TAA_COROUTINE_C_
+#ifdef taa_COROUTINE_C_
 
-// This file provides a custom coroutine implementation using setjmp/longjmp
-// and stack pointer manipulation. This solution may cause issues with C++
-// features such as exception unwinding and should only be used is the absence
+// this file provides a coroutine implementation using setjmp/longjmp
+// and stack pointer manipulation. this solution may cause issues with c++
+// features such as exception unwinding and should only be used in the absence
 // of a native solution for the target platform.
+#include <taa/coroutine.h>
 #include <assert.h>
 #include <setjmp.h>
 #include <stdlib.h>
 
 //****************************************************************************
 
+// override longjmp stack protection on gcc. this could be done by redefining
+// __USE_FORTIFY_LEVEL to 0, but that may not work or play well with other
+// source files if they are included together in the same compilation unit.
+// this method, while relying on compiler internals, keeps changes local.
+#if defined(__GNUC__) && __USE_FORTIFY_LEVEL > 0
+#pragma push_macro("longjmp")
+#pragma push_macro("setjmp")
+#undef longjmp
+#undef setjmp
+#define longjmp taa_coroutine_longjmp
+#define setjmp _setjmp
+// assembly redirection may have been used to point _longjmp at the checked
+// implementation; create a new redirection that points to the real _longjmp	    
+extern void taa_coroutine_longjmp(
+    void* env,
+    int val) __asm__("_longjmp") __attribute__ ((__noreturn__));			        
+#endif
+
 #if defined(__GNUC__) && defined(__i386__) // GCC, x86
 
 // replace stack register and call function
 #define taa_COROUTINE_LAUNCH(_func, _stack) \
-    asm volatile ("movl %0, %%edx\n" \
-                  "movl %1, %%esp\n" \
-                  "call *%%edx" \
-                  : \
-                  : "r"(_func), "r"(_stack) \
-                  : "%esp", "%edx");
+    __asm__ __volatile__ ( \
+    "movl %0, %%edx\n" \
+    "movl %1, %%esp\n" \
+    "call *%%edx" \
+    : \
+    : "r"(_func), "r"(_stack) \
+    : "%esp", "%edx");
+// x86 stack grows downward
+#define taa_COROUTINE_STACKDIR 1
+
+#elif defined(__GNUC__) && defined(__x86_64__) // GCC, x64
+
+// replace stack register and call function
+#define taa_COROUTINE_LAUNCH(_func, _stack) \
+    __asm__ __volatile__ ( \
+    "movq %0, %%rdx\n" \
+    "movq %1, %%rsp\n" \
+    "call *%%rdx" \
+    : \
+    : "r"(_func), "r"(_stack) \
+    : "%rsp", "%rdx");
 // x86 stack grows downward
 #define taa_COROUTINE_STACKDIR 1
 
@@ -49,10 +83,10 @@
 
 // ***************************************************************************
 
-typedef struct taa_coroutine_other_s taa_coroutine_other;
+typedef struct taa_coroutine_impl_s taa_coroutine_impl;
 typedef struct taa_coroutine_status_s taa_coroutine_status;
 
-struct taa_coroutine_other_s
+struct taa_coroutine_impl_s
 {
     jmp_buf jmpbuf;
     taa_coroutine_func func;
@@ -64,7 +98,7 @@ struct taa_coroutine_other_s
 struct taa_coroutine_status_s
 {
     jmp_buf basejmp;
-    taa_coroutine_other* active;
+    taa_coroutine_impl* active;
 };
 
 taa_THREADLOCAL_STATIC taa_coroutine_status taa_tls_coroutine_status;
@@ -93,55 +127,58 @@ static void taa_coroutine_wrapper()
 }
 
 //****************************************************************************
-void taa_coroutine_create(
-    uint32_t stacksize,
+int taa_coroutine_create(
+    size_t stacksize,
     taa_coroutine_func func,
     void* args,
-    taa_coroutine* cout)
+    taa_coroutine* co_out)
 {
-    // alloc a buffer big enough for the stack and data
-    taa_coroutine_other* other;
+    int err = -1;
+    taa_coroutine_impl* coimpl;
     uint8_t* buf;
     uint8_t* stack;
-    buf = (uint8_t*) malloc(sizeof(*other) + stacksize);
-
-    other = (taa_coroutine_other*) buf;
-    buf = (uint8_t*) (other + 1);
-    // put stack at beginning or end of buffer depending on direction it grows
-    stack = buf + stacksize * taa_COROUTINE_STACKDIR;
-
-    other->func = func;
-    other->args = args;
-    other->stack = stack;
-    other->started = 0; //false
-    cout->other = other;
+    // alloc a buffer big enough for the stack and data
+    buf = (uint8_t*) malloc(sizeof(*coimpl) + stacksize);
+    if(buf != NULL)
+    {
+        coimpl = (taa_coroutine_impl*) buf;
+        buf = (uint8_t*) (coimpl + 1);
+        // put stack at beginning or end of buffer depending grow direction
+        stack = buf + stacksize * taa_COROUTINE_STACKDIR;
+        coimpl->func = func;
+        coimpl->args = args;
+        coimpl->stack = stack;
+        coimpl->started = 0; //false
+        *co_out = (taa_coroutine) coimpl;
+        err = 0;
+    }
+    return err;
 };
 
 //****************************************************************************
-void taa_coroutine_destroy(
-    taa_coroutine* c)
+int taa_coroutine_destroy(
+    taa_coroutine co)
 {
-    free(c->other);
+    free(co);
+    return 0;
 }
 
 //****************************************************************************
-void taa_coroutine_execute(
-    taa_coroutine* c)
+int taa_coroutine_execute(
+    taa_coroutine co)
 {
     volatile taa_coroutine_status* tls;
-
     // initialize the base context
     tls = &taa_tls_coroutine_status;
-    tls->active = (taa_coroutine_other*) c->other;
+    tls->active = (taa_coroutine_impl*) co;
     setjmp(((taa_coroutine_status*) tls)->basejmp);
     // all coroutines jump here when switched or done
-
     tls = &taa_tls_coroutine_status;
     if(tls->active != NULL)
     {
         if(!tls->active->started)
         {
-            // jump hasn't been created for the corotouine yet, so launch it
+            // jump hasn't been created for the coroutine yet, so launch it
             void* stack = tls->active->stack;
             taa_COROUTINE_LAUNCH(taa_coroutine_wrapper, stack)
             // never reaches here; jumps back to base context
@@ -150,20 +187,20 @@ void taa_coroutine_execute(
         longjmp(tls->active->jmpbuf, 1);
         // never reaches here; jumps back to base context
     }
+    return 0;
 }
 
 //****************************************************************************
 void taa_coroutine_switch(
-    taa_coroutine* c)
+    taa_coroutine co)
 {
     taa_coroutine_status* tls = &taa_tls_coroutine_status;
-
     // save the active coroutine
     assert(tls->active != NULL); // only can be called from within a coroutine
     if(!setjmp(tls->active->jmpbuf))
     {
         // set the new coroutine
-        tls->active = (taa_coroutine_other*) c->other;
+        tls->active = (taa_coroutine_impl*) co;
         // jump back to the base context
         longjmp(tls->basejmp, 1);
     }
@@ -172,4 +209,11 @@ void taa_coroutine_switch(
 #undef taa_COROUTINE_LAUNCH
 #undef taa_COROUTINE_STACKDIR
 
-#endif // TAA_COROUTINE_C_
+// restore gcc stack protection
+#if defined(__GNUC__) && __USE_FORTIFY_LEVEL > 0
+#pragma pop_macro("longjmp")
+#pragma pop_macro("setjmp")
+#endif
+
+#endif // taa_COROUTINE_C_
+

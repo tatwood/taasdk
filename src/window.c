@@ -4,9 +4,7 @@
  * @date      2011
  * @copyright unlicense / public domain
  ****************************************************************************/
-#include <taa/window.h>
-
-#define TAA_WINDOW_C_
+#define taa_WINDOW_C_
 
 #ifdef WIN32
 #include "window_win32.c"
@@ -14,4 +12,4 @@
 #include "window_x11.c"
 #endif
 
-#undef TAA_WINDOW_C_
+#undef taa_WINDOW_C_

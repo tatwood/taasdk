@@ -4,8 +4,8 @@
  * @date      2011
  * @copyright unlicense / public domain
  ****************************************************************************/
-#ifndef TAA_HASH_H_
-#define TAA_HASH_H_
+#ifndef taa_HASH_H_
+#define taa_HASH_H_
 
 #include "system.h"
 
@@ -38,4 +38,4 @@ taa_INLINE static uint32_t taa_hash_pjw(const char* s)
     return h;
 }
 
-#endif // TAA_HASH_H_
+#endif // taa_HASH_H_

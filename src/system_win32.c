@@ -1,11 +1,23 @@
 /**
- * @brief     miscellaneous system function implementation for win32
+ * @brief     miscellaneous system function implementation for win32 target
  * @author    Thomas Atwood (tatwood.net)
  * @date      2011
  * @copyright unlicense / public domain
  ****************************************************************************/
 // only compile when included by system.c
-#ifdef TAA_SYSTEM_C_
+#ifdef taa_SYSTEM_C_
+#include <taa/system.h>
+#include <assert.h>
+#include <io.h>
+#include <stdlib.h>
+#include <string.h>
+
+struct taa_dir_s
+{
+    int h;
+    const char* first;
+    struct _finddata_t data;
+};
 
 //****************************************************************************
 int taa_chdir(
@@ -15,61 +27,51 @@ int taa_chdir(
 }
 
 //****************************************************************************
-void taa_closedir(
-    taa_dir* dir)
+int taa_closedir(
+    taa_dir dir)
 {
-    _findclose(dir->win32.h);
+    int err = _findclose(dir->h);
+    free(dir);
+    return err;
 }
 
 //****************************************************************************
 char* taa_getcwd(
-    char* pathout,
+    char* path_out,
     uint32_t pathsize)
 {
-    return GetCurrentDirectory(pathsize, pathout) ? pathout : NULL;
+    return GetCurrentDirectory(pathsize, path_out) ? path_out : NULL;
 }
 
 //****************************************************************************
-int taa_getfilestat(
-    const char* path,
-    taa_filestat* out)
+void* taa_memalign(
+    size_t align,
+    size_t size)
 {
-    int result = -1;
-    WIN32_FILE_ATTRIBUTE_DATA attr;
-    if(GetFileAttributesEx(path,GetFileExInfoStandard, &attr) != 0)
-    {
-        uint32_t dirmask = attr.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY;
-        out->mode = (dirmask != 0) ? taa_FILE_IFDIR : taa_FILE_IFREG;
-        out->size = attr.nFileSizeLow;
-        result = 0;
-    }
-    return result;
+    assert(align > sizeof(uint64_t));
+    return _aligned_malloc(size, align);
 }
 
 //****************************************************************************
-void taa_getsystemtime(uint64_t* nsout)
+void taa_memalign_free(
+    void* p)
 {
-    static uint64_t freq = 0;
-    uint64_t ctr;
-    if(freq == 0)
-    {
-        QueryPerformanceFrequency((LARGE_INTEGER*) &freq);
-    }
-    QueryPerformanceCounter((LARGE_INTEGER*) &ctr);
-    *nsout = (((uint64_t) 1000000000) * ctr)/freq;
+    _aligned_free(p);
 }
 
 //****************************************************************************
 int taa_opendir(
     const char* path,
-    taa_dir* dirout)
+    taa_dir* dir_out)
 {
-    dirout->win32.h = -1;
-    dirout->win32.name = NULL;
+    int result = -1;
+    *dir_out = NULL;
     if(path != NULL && *path != '\0')
     {
-        char* s = dirout->win32.data.name;
-        uint32_t size = sizeof(dirout->win32.data.name)-3;
+        char s[256];
+        unsigned size = sizeof(s)-3;
+        int h;
+        struct _finddata_t data;
         strncpy(s, path, size);
         s[size] = '\0';
         size = strlen(s);
@@ -79,29 +81,88 @@ int taa_opendir(
         }
         else if(s[size-1] != '*')
         {
-            strcpy(s + size, "\\*");            
+            strcpy(s + size, "\\*");
         }
-        dirout->win32.h = _findfirst(s, &dirout->win32.data);
+        h = _findfirst(s, &data);
+        if(h != -1)
+        {
+            taa_dir dir = (taa_dir) malloc(sizeof(*dir));
+            dir->h = h;
+            dir->data = data;
+            dir->first = dir->data.name;
+            *dir_out = dir;
+            result = 0;
+        }
     }
-    return (dirout->win32.h != -1) ? 0 : -1;
+    return result;
 }
 
 //****************************************************************************
 const char* taa_readdir(
-    taa_dir* dir)
+    taa_dir dir)
 {
-    if(dir->win32.h != -1)
+    const char* s = NULL;
+    if(dir->first != NULL)
     {
-        if(dir->win32.name == NULL)
+        s = dir->first;
+        dir->first = NULL;
+    }
+    else if(_findnext(dir->h, &dir->data) != -1)
+    {
+        s = dir->data.name;
+    }
+    if(s != NULL)
+    {
+        while(!strcmp(s, ".") || !strcmp(s, ".."))
         {
-            dir->win32.name = dir->win32.data.name;
-        }
-        else if(_findnext(dir->win32.h, &dir->win32.data) == -1)
-        {
-            dir->win32.name = NULL;
+            if(_findnext(dir->h, &dir->data) != -1)
+            {
+                s = dir->data.name;
+            }
+            else
+            {
+                s = NULL;
+                break;
+            }
         }
     }
-    return dir->win32.name;
+    return s;
 }
 
-#endif // TAA_SYSTEM_C_
+//****************************************************************************
+void taa_sched_yield()
+{
+    // This MSDN documentation implies that Sleep(0) will behave more like
+    // sched_yield than SwitchToThread and move the thread to the back of the
+    // scheduling queue, rather than switching back immediately after the
+    // yielded schedule slice has expired.
+    //SwitchToThread();
+    Sleep(0);
+}
+
+//****************************************************************************
+void taa_sleep(
+    uint32_t ms)
+{
+    Sleep(ms);
+}
+
+//****************************************************************************
+int taa_stat(
+    const char* path,
+    struct taa_stat* st_out)
+{
+    int result = -1;
+    WIN32_FILE_ATTRIBUTE_DATA at;
+    if(GetFileAttributesEx(path,GetFileExInfoStandard, &at) != 0)
+    {
+        uint32_t dirmask = at.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY;
+        uint64_t size = (((uint64_t) at.nFileSizeHigh)<<32) | at.nFileSizeLow;
+        st_out->st_mode = (dirmask != 0) ? taa_S_IFDIR : taa_S_IFREG;
+        st_out->st_size = (size_t) size;
+        result = 0;
+    }
+    return result;
+}
+
+#endif // taa_SYSTEM_C_

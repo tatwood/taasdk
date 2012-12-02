@@ -5,208 +5,224 @@
  * @copyright unlicense / public domain
  ****************************************************************************/
 #include <taa/workqueue.h>
-#include <taa/semaphore.h>
-#include <taa/thread.h>
+#include <taa/conditionvar.h>
+#include <taa/mutex.h>
 #include <stdlib.h>
 
-typedef struct taa_workqueue_node_s taa_workqueue_node;
+typedef struct taa_workqueue_job_s taa_workqueue_job;
+typedef struct taa_workqueue_list_s taa_workqueue_list;
 
-struct taa_workqueue_node_s
+struct taa_workqueue_job_s
 {
-    taa_workqueue_func workfunc;
-    taa_workqueue_callback callback;
+    taa_workqueue_func  func;
     void* userdata;
     int32_t result;
-    taa_workqueue_node* next;
+    taa_workqueue_job* next;
 };
+
+struct taa_workqueue_list_s
+{
+    volatile uint32_t lock;
+    taa_workqueue_job* head;
+    taa_workqueue_job* tail;
+};
+
 
 struct taa_workqueue_s
 {
-    taa_workqueue_node* worklist;
-    taa_workqueue_node* callbacklist;
-    taa_workqueue_node* pool;
-    volatile int32_t quit;
-    taa_window_display windisp;
-    taa_rendercontext rc;
-    taa_semaphore worksem;
-    taa_semaphore mainsem;
-    taa_thread thread;
+    taa_mutex lock;
+    taa_conditionvar condvar;
+    taa_workqueue_list queue;
+    taa_workqueue_list pool;
+    int32_t abort;
+    void* end;
 };
 
 //****************************************************************************
-static taa_workqueue_node* taa_workqueue_popnodes(
-    taa_workqueue_node** list)
+static taa_workqueue_job* taa_workqueue_list_pop(
+    taa_workqueue_list* queue)
 {
-    taa_workqueue_node* node = *list;
-    taa_workqueue_node* prev;
-    do
+    taa_workqueue_job* job;
+    // pop the job
+    job = queue->head;
+    if(job != NULL)
     {
-        prev = node;
-        node = taa_ATOMIC_CMPXCHGPTR(list, node, NULL);
+        taa_workqueue_job* next = job->next;
+        queue->head = next;
+        if(next == NULL)
+        {
+            queue->tail = NULL;
+        }
     }
-    while(node != prev);
-    return node;
+    return job;
 }
 
 //****************************************************************************
-static void taa_workqueue_pushnode(
-    taa_workqueue_node** list,
-    taa_workqueue_node* node)
+static void taa_workqueue_list_push(
+    taa_workqueue_list* queue,
+    taa_workqueue_job* job)
 {
-    taa_workqueue_node* next;
-    node->next = *list;
-    do
+    taa_workqueue_job* tail;
+    // push the job
+    tail = queue->tail;
+    queue->tail = job;
+    if(tail != NULL)
     {
-        next = node->next;
-        node->next = taa_ATOMIC_CMPXCHGPTR(list, node->next, node);
+        tail->next = job;
     }
-    while(node->next != next);
+    else
+    {
+        queue->head = job;
+    }
+    job->next = NULL;
 }
 
-
 //****************************************************************************
-static int taa_workqueue_thread(
-    void* args)
+void taa_workqueue_abort(
+    taa_workqueue* wq)
 {
-    taa_workqueue* wq = (taa_workqueue*) args;
-    taa_workqueue_node* node = NULL;
-    taa_rendercontext_makecurrent(&wq->windisp, &wq->rc);
-    taa_semaphore_post(&wq->mainsem);
-    while(!wq->quit)
-    {
-        if(node == NULL)
-        { 
-            node = taa_workqueue_popnodes(&wq->worklist);
-        }
-        if(node != NULL)
-        {
-            taa_workqueue_node* next = node->next;
-            node->result = node->workfunc(node->userdata);
-            taa_workqueue_pushnode(&wq->callbacklist, node);
-            node = next;
-        }
-        else
-        {
-            // if there was nothing to process, wait for a post
-            taa_semaphore_wait(&wq->worksem);
-        }
-    }
-    //make sure all aborted nodes are put into callback list
-    do
-    {
-        while(node != NULL)
-        {
-            taa_workqueue_node* next = node->next;
-            taa_workqueue_pushnode(&wq->callbacklist, node);
-            node = next;
-        }
-        if(node == NULL)
-        { 
-            node = taa_workqueue_popnodes(&wq->worklist);
-        }
-    }
-    while(node != NULL);
-    taa_rendercontext_makecurrent(&wq->windisp, NULL);
-    return 0;
+    taa_mutex_lock(&wq->lock);
+    wq->abort = 1;
+    taa_conditionvar_signal(&wq->condvar);
+    taa_mutex_unlock(&wq->lock);
 }
 
 //****************************************************************************
 void taa_workqueue_create(
-    taa_window_display* windisp,
-    taa_rendercontext* rc,
     uint32_t capacity,
-    taa_workqueue** wqout)
+    taa_workqueue** wq_out)
 {
+    uintptr_t offset = 0;
     taa_workqueue* wq;
-    taa_workqueue_node* node;
-    taa_workqueue_node* nodeend;
-    uint32_t size = sizeof(*wq) + sizeof(*node)*capacity;
-    void* buf = malloc(size);
-    wq = (taa_workqueue*) buf;
-    buf = wq + 1;
-
-    wq->pool = (taa_workqueue_node*) buf;
-    node = wq->pool;
-    nodeend = node + capacity - 1;
-    while(node != nodeend)
+    taa_workqueue_job* j;
+    taa_workqueue_job* jend;
+    // determine buffer size and pointer offsets
+    wq = (taa_workqueue*) offset;
+    offset = (uintptr_t) (wq + 1);
+    j = (taa_workqueue_job*) taa_ALIGN_PTR(offset, 8);
+    offset = (uintptr_t) (j + capacity);
+    // allocate the buffer and adjust pointers
+    offset = (uintptr_t) calloc(1, offset);
+    wq = (taa_workqueue*) (((uintptr_t) wq) + offset);
+    j = (taa_workqueue_job*) (((uintptr_t) j) + offset);
+    jend = j + capacity;
+    // initialize workqueue struct
+    taa_conditionvar_create(&wq->condvar);
+    taa_mutex_create(&wq->lock);
+    wq->pool.head = j;
+    wq->pool.tail = jend - 1;
+    wq->end = jend;
+    // initialize job pool
+    while(j != jend-1)
     {
-        node->next = node + 1;
-        ++node;
+        j->next = j + 1;
+        ++j;
     }
-    node->next = NULL;
-
-    wq->windisp = *windisp;
-    taa_rendercontext_createshared(rc, &wq->rc);
-    taa_semaphore_create(&wq->worksem);
-    taa_semaphore_create(&wq->mainsem);
-    wq->worklist = NULL;
-    wq->callbacklist = NULL;
-    wq->quit = 0;
-    taa_thread_create(taa_workqueue_thread, wq, &wq->thread);
-    taa_semaphore_wait(&wq->mainsem);
-    *wqout = wq;
+    // set out parameter
+    *wq_out = wq;
 }
 
 //****************************************************************************
 void taa_workqueue_destroy(
     taa_workqueue* wq)
 {
-    wq->quit = 1;
-    taa_semaphore_post(&wq->worksem);
-    taa_thread_join(&wq->thread);
-    taa_semaphore_destroy(&wq->mainsem);
-    taa_semaphore_destroy(&wq->worksem);
-    taa_rendercontext_destroy(&wq->rc);
+    taa_workqueue_job* job;
+    taa_conditionvar_destroy(&wq->condvar);
+    taa_mutex_destroy(&wq->lock);
+    // make sure any overflow allocations are freed
+    job = wq->queue.head;
+    while(job != NULL)
+    {
+        taa_workqueue_job* next = job->next;
+        if((((void*)job) < ((void*)wq)) || (((void*)job) > wq->end))
+        {
+            free(job); // free overflow
+        }
+        job = next;
+    }
+    // free buffer
     free(wq);
+}
+
+//****************************************************************************
+int32_t taa_workqueue_pop(
+    taa_workqueue* wq,
+    int32_t block,
+    taa_workqueue_func* func_out,
+    void** data_out)
+{
+    int32_t retval = 0;
+    if(wq->queue.head != NULL || block)
+    {
+        taa_mutex_lock(&wq->lock);
+        if(!wq->abort)
+        {
+            while(1)
+            {
+                taa_workqueue_job* job;
+                job = taa_workqueue_list_pop(&wq->queue);
+                if(job != NULL)
+                {
+                    *func_out = job->func;
+                    *data_out = job->userdata;
+                    retval = 1;
+                    if(((void*)job) >= ((void*)wq) && ((void*)job) < wq->end)
+                    {
+                        // put the job node back in the pool
+                        taa_workqueue_list_push(&wq->pool, job);
+                    }
+                    else
+                    {
+                        // free overflow pointer
+                        free(job);
+                    }
+                    break;
+                }
+                // no job found
+                if(block)
+                {
+                    // wait for signal
+                    taa_conditionvar_wait(&wq->condvar, &wq->lock);
+                    if(wq->abort != 0)
+                    {
+                        // if woken up from an abort signal, repost it 
+                        // so that other threads get woken up as well.
+                        taa_conditionvar_signal(&wq->condvar);
+                        break;
+                    }
+                }
+                else
+                {
+                    break;
+                }
+            }
+        }
+        taa_mutex_unlock(&wq->lock);
+    }
+    return retval;
 }
 
 //****************************************************************************
 void taa_workqueue_push(
     taa_workqueue* wq,
-    taa_workqueue_func workfunc,
-    taa_workqueue_callback callback,
+    taa_workqueue_func func,
     void* userdata)
 {
-    // acquire a request node
-    taa_workqueue_node* node = wq->pool;
-    taa_workqueue_node* prev;
-    do
+    taa_mutex_lock(&wq->lock);
+    if(!wq->abort)
     {
-        while(node == NULL)
+        // attempt to get a job node from the pool
+        taa_workqueue_job* job = taa_workqueue_list_pop(&wq->pool);
+        if(job == NULL)
         {
-            taa_thread_yield();
-            node = wq->pool;
+            // if that didn't work, allocate an overflow node
+            job = (taa_workqueue_job*) malloc(sizeof(*job));
+            // TODO: log overflow warning
         }
-        prev = node;
-        node = taa_ATOMIC_CMPXCHGPTR(&wq->pool, node, node->next);
+        job->func = func;
+        job->userdata = userdata;
+        taa_workqueue_list_push(&wq->queue, job);
+        taa_conditionvar_signal(&wq->condvar);
     }
-    while(prev != node);
-    // set its members
-    node->workfunc = workfunc;
-    node->callback = callback;
-    node->userdata = userdata;
-    node->result = -1;
-    // push it to the load list
-    taa_workqueue_pushnode(&wq->worklist, node);
-    // post a signal to the worker thread
-    taa_semaphore_post(&wq->worksem);
-}
-
-//****************************************************************************
-void taa_workqueue_update(
-    taa_workqueue* wq)
-{
-    taa_workqueue_node* node = taa_workqueue_popnodes(&wq->callbacklist);
-    while(node != NULL)
-    {
-        taa_workqueue_node* next = node->next;
-        // perform callback
-        if(node->callback != NULL)
-        {
-            node->callback(node->result, node->userdata);
-        }
-        // put request back in pool
-        taa_workqueue_pushnode(&wq->pool, node);
-        node = next;
-    }
+    taa_mutex_unlock(&wq->lock);
 }

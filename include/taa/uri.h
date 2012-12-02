@@ -4,74 +4,77 @@
  * @date      2011
  * @copyright unlicense / public domain
  ****************************************************************************/
-#ifndef TAA_URI_H_
-#define TAA_URI_H_
+#ifndef taa_URI_H_
+#define taa_URI_H_
 
 #include "system.h"
 
+// TODO: this code has an obvious big gaping hole in that it doesn't provide
+// escaping and unescaping.
+
 enum
 {
-    taaURI_SIZE = 256
+    taa_URI_SIZE = 256
 };
 
-void taa_uri_appendpath(
+taa_SDK_LINKAGE void taa_uri_append_path(
     char* uri,
     uint32_t urisize,
     const char* rel_path);
 
-void taa_uri_getextension(
+taa_SDK_LINKAGE void taa_uri_get_extension(
     const char* uri,
-    char* extout,
+    char* ext_out,
     uint32_t size);
 
-void taa_uri_getfilename(
+taa_SDK_LINKAGE void taa_uri_get_filename(
     const char* uri,
-    char* fileout,
+    char* file_out,
     uint32_t size);
 
-void taa_uri_getfragment(
+taa_SDK_LINKAGE void taa_uri_get_fragment(
     const char* uri,
-    char* fragmentout,
+    char* fragment_out,
     uint32_t size);
 
-void taa_uri_gethost(
+taa_SDK_LINKAGE void taa_uri_get_host(
     const char* uri,
-    char* hostout,
+    char* host_out,
     uint32_t size);
 
-void taa_uri_getpath(
+taa_SDK_LINKAGE void taa_uri_get_path(
     const char* uri,
-    char* pathout,
+    char* path_out,
     uint32_t size);
 
-void taa_uri_getprotocol(
+taa_SDK_LINKAGE void taa_uri_get_scheme(
     const char* uri,
-    char* protocolout,
+    char* scheme_out,
     uint32_t size);
 
-void taa_uri_set(
-    const char* s,
-    char* uriout,
-    uint32_t urisize);
+taa_SDK_LINKAGE void taa_uri_set(
+    char* uri,
+    uint32_t urisize,
+    const char* src);
 
-void taa_uri_setfragment(
+taa_SDK_LINKAGE void taa_uri_set_fragment(
     char* uri,
     uint32_t urisize,
     const char* fragment);
 
-void taa_uri_sethost(
+taa_SDK_LINKAGE void taa_uri_set_host(
     char* uri,
     uint32_t urisize,
     const char* host);
 
-void taa_uri_setpath(
+taa_SDK_LINKAGE void taa_uri_set_path(
     char* uri,
     uint32_t urisize,
     const char* path);
 
-void taa_uri_setprotocol(
+taa_SDK_LINKAGE void taa_uri_set_scheme(
     char* uri,
     uint32_t urisize,
-    const char* protocol);
+    const char* scheme);
 
-#endif // TAA_URI_H_
+#endif // taa_URI_H_

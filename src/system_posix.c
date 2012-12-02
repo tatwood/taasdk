@@ -5,10 +5,11 @@
  * @copyright unlicense / public domain
  ****************************************************************************/
 // only compile when included by system.c
-#ifdef TAA_SYSTEM_C_
-
-#include <sys/stat.h>
-#include <time.h>
+#ifdef taa_SYSTEM_C_
+#include <taa/system.h>
+#include <assert.h>
+#include <sched.h>
+#include <stdlib.h>
 #include <unistd.h>
 
 //****************************************************************************
@@ -19,60 +20,95 @@ int taa_chdir(
 }
 
 //****************************************************************************
-void taa_closedir(
-    taa_dir* dir)
+int taa_closedir(
+    taa_dir dir)
 {
-    closedir(dir->posix.dir);
+    return closedir((DIR*) dir);
 }
 
 //****************************************************************************
 char* taa_getcwd(
-    char* pathout,
+    char* path_out,
     uint32_t pathsize)
 {
-    return getcwd(pathout, pathsize);
+    return getcwd(path_out, pathsize);
 }
 
 //****************************************************************************
-int taa_getfilestat(
-    const char* path,
-    taa_filestat* out)
+void* taa_memalign(
+    size_t align,
+    size_t size)
 {
-    int result = -1;
-    struct stat st;
-    if(stat(path, &st) == 0)
+    void* p;
+    assert(align > sizeof(uint64_t));  
+    if(align <= sizeof(long double))
     {
-        out->mode = (st.st_mode&S_IFDIR) ? taa_FILE_IFDIR : taa_FILE_IFREG;
-        out->size = st.st_size;
-        result = 0;
+        // no special alignment necessary    
+        p = malloc(size);
     }
-    return result;
+    else
+    {
+        if(posix_memalign(&p, align, size) != 0)
+        {
+            p = NULL;
+        }
+    }
+    return p;
 }
 
 //****************************************************************************
-void taa_getsystemtime(uint64_t* nsout)
+void taa_memalign_free(
+    void* p)
 {
-    struct timespec ts;
-    clock_gettime(CLOCK_MONOTONIC, &ts);
-    *nsout = ((uint64_t) ts.tv_sec)*1000000000L + ts.tv_nsec;
+    free(p);
 }
 
 //****************************************************************************
 int taa_opendir(
     const char* path,
-    taa_dir* dirout)
+    taa_dir* dir_out)
 {
-    dirout->posix.dir = opendir(path);
-    return (dirout->posix.dir != NULL) ? 0 : -1;
+    DIR* dir = opendir(path);
+    *dir_out = (taa_dir) dir;
+    return (dir != NULL) ? 0 : -1;
 }
 
 //****************************************************************************
 const char* taa_readdir(
-    taa_dir* dir)
+    taa_dir dir)
 {
-    struct dirent* entry = readdir(dir->posix.dir);
+    struct dirent* entry = readdir((DIR*) dir);
     return (entry != NULL) ? entry->d_name : NULL; 
 }
 
-#endif // TAA_SYSTEM_C_
+//****************************************************************************
+void taa_sched_yield()
+{
+    sched_yield();
+}
+
+//****************************************************************************
+void taa_sleep(
+    uint32_t ms)
+{
+    usleep(ms * 1000); // ms to us
+}
+
+//****************************************************************************
+int taa_stat(
+    const char* path,
+    struct taa_stat* out)
+{
+    int result = -1;
+    struct stat st;
+    if(stat(path, &st) == 0)
+    {
+        out->st_mode = (st.st_mode & S_IFDIR) ? taa_S_IFDIR : taa_S_IFREG;
+        out->st_size = st.st_size;
+        result = 0;
+    }
+    return result;
+}
+
+#endif // taa_SYSTEM_C_
 

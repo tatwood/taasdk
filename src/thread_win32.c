@@ -5,52 +5,29 @@
  * @copyright unlicense / public domain
  ****************************************************************************/
 // only compile when included by thread.c
-#ifdef TAA_THREAD_C_
-
+#ifdef taa_THREAD_C_
+#include <taa/thread.h>
 #include <process.h>
-#include <stdlib.h>
-
-typedef struct taa_thread_args_s taa_thread_args;
-
-struct taa_thread_args_s
-{
-    taa_thread_func func;
-    void* args;
-};
 
 //****************************************************************************
-static uint32_t __stdcall taa_thread_wrapper(
-    void* args)
-{
-    taa_thread_args targs = *((taa_thread_args*) args);
-    free(args);
-    return targs.func(targs.args);
-}
-
-//****************************************************************************
-void taa_thread_create(
+int taa_thread_create(
     taa_thread_func func,
     void* args,
-    taa_thread* tout)
+    taa_thread* t_out)
 {
-    taa_thread_args* targs = (taa_thread_args*) malloc(sizeof(*targs));
-    uintptr_t h;
-
-    targs->func = func;
-    targs->args = args;
-
-    h = _beginthreadex(NULL, 0,taa_thread_wrapper,targs,0,&tout->win32.id);
-    tout->win32.h = (HANDLE) h;
+    HANDLE h = (HANDLE) _beginthreadex(
+        NULL,
+        0,
+        func,
+        args,
+        0,
+        NULL);
+    *t_out = h;
+    return (h != NULL) ? 0 : -1;
 }
 
 //****************************************************************************
-taa_thread_id taa_thread_currentid()
-{
-    return (taa_thread_id) GetCurrentThreadId();
-}
-
-//****************************************************************************
-int32_t taa_thread_equal(
+int taa_thread_equal(
     taa_thread_id a,
     taa_thread_id b)
 {
@@ -58,35 +35,20 @@ int32_t taa_thread_equal(
 }
 
 //****************************************************************************
-taa_thread_id taa_thread_getid(
-    taa_thread* t)
-{
-    return (taa_thread_id) t->win32.id;
-}
-
-//****************************************************************************
-int taa_thread_join(
-    taa_thread* t)
+taa_thread_result taa_thread_join(
+    taa_thread t)
 {
     DWORD ret;
-    WaitForSingleObject(t->win32.h, INFINITE);
-    GetExitCodeThread(t->win32.h, &ret);
-    CloseHandle(t->win32.h);
-    return (int) ret;
+    WaitForSingleObject((HANDLE) t, INFINITE);
+    GetExitCodeThread((HANDLE) t, &ret);
+    CloseHandle((HANDLE) t);
+    return (taa_thread_result) ret;
 }
 
 //****************************************************************************
-void taa_thread_sleep(
-    uint32_t ms)
+taa_thread_id taa_thread_self()
 {
-    Sleep(ms);
+    return (taa_thread_id) GetCurrentThreadId();
 }
 
-//****************************************************************************
-void taa_thread_yield()
-{
-    SwitchToThread();
-}
-
-#endif // TAA_THREAD_C_
-
+#endif // taa_THREAD_C_

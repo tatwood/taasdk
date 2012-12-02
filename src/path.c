@@ -8,19 +8,27 @@
 #include <string.h>
 
 //****************************************************************************
-static void taa_path_clean(
-    char* path)
+void taa_path_clean(
+    char* path,
+    char sepslash)
 {
-    enum
-    {
-        SEP_SLASH = taa_PATH_SLASH,
-        REV_SLASH = (SEP_SLASH == '/') ? '\\' : '/'
-    };
-    char* pathitr;
+    char revslash = (sepslash == '/') ? '\\' : '/';
     char* ch;
+    char* end;
+    end = path + strlen(path) + 1; // include space for NULL terminator
 
-    pathitr = path;
-    ch = pathitr;
+    // pass 0: convert all slashes to native value
+    ch = path;
+    while(*ch != '\0')
+    {    
+        if(*ch == revslash)
+        {
+            *ch = sepslash;
+        }
+        ++ch;
+    }    
+    // pass 1: flatten redirections to parent dir (../)
+    ch = path;
     while(*ch != '\0')
     {
         if(*ch == '.')
@@ -28,79 +36,130 @@ static void taa_path_clean(
             if(ch[1] == '.')
             {
                 int32_t off;
-                // Move up to the parent folder
-                if(ch == pathitr)
+                if(ch == path)
                 {
                     // if the '..' sequence is at the beginning of
-                    // the pathitr, leave it in place.
+                    // the path, leave it in place.
                     ch += 2;
                     continue;
                 }
-                off = ((int32_t) (ch - pathitr)) - 1;
+                off = ((int32_t) (ch - path)) - 1;
+                // find the beginning of the dir preceeding the '..'
                 if(off > 0)
                 {
                     --off;
-                    if(off > 0 && pathitr[off] == SEP_SLASH)
+                    if(off > 0 && path[off] == sepslash)
                     {
                         --off;
                     }
-                    while(off > 0 && pathitr[off] != SEP_SLASH)
+                    while(off > 0 && path[off] != sepslash)
                     {
                         --off;
                     }
                 }
+                if(off == 0 && path[off] == '.')
+                {
+                    // never remove a '.' from the front of the path
+                    ch += 2;
+                    continue;
+                }
+                if(path[off+1] == '.' && path[off+2] == '.')
+                {
+                    // if the preceeding dir is a '..' sequence, 
+                    // then leave it in place.
+                    ch += 2;
+                    continue;
+                }
+                // if the dir being removed is at the beginning of a
+                // relative path, then the full '../' needs to be removed to
+                // prevent the path from becoming absolute.
                 if(off == 0)
                 {
                     ++ch;
-                }
-                strcpy(pathitr + off, ch + 2);
-                ch = pathitr + off;
-                continue;
-            }
-            else if(ch[1] == SEP_SLASH || ch[1] == REV_SLASH)
-            {
-                // referencing the current folder
-                if(ch == pathitr)
-                {
-                    // if the './' sequence is at the beginning of
-                    // the pathitr, leave it in place.
-                    ++ch;
-                }
-                else
-                {
-                    // move the slash over the period
-                    strcpy(ch, ch + 1);
-                    // since a slash was moved into this slot,
-                    // back up to make sure it's not redundant
-                    --ch;
-                }
+                }             
+                // remove the '..' and the dir preceeding it
+                end -= 2;
+                memmove(path + off, ch + 2, (size_t) (end - ch));
+                ch = path + off;
                 continue;
             }
         }
-        else if(*ch == SEP_SLASH)
+        else if(*ch == sepslash)
         {
             // remove redundant slashes
-            if(ch[1] == SEP_SLASH || ch[1] == REV_SLASH)
+            if(ch[1] == sepslash)
             {
-                strcpy(ch, ch + 1);
+                --end;
+                memmove(ch, ch + 1, (size_t) (end - ch));
                 continue;
             }
-        }
-        else if(*ch == REV_SLASH)
-        {
-            // convert back slashes to forward slashes.
-            *ch = SEP_SLASH;
-            continue;
         }
         ++ch;
     }
+    // pass 2: remove self referencing dirs (./)
+    ch = path;
+    while(*ch != '\0')
+    {
+        if(*ch == '.')
+        {
+            if(ch == path)
+            {
+                // never remove a '.' from the front of the path
+                ++ch;
+            }        
+            else if(ch[1] == '.')
+            {
+                // preserve any remaining instances of '..'
+                ch += 2;
+                continue;
+            }        
+            else if(ch[1] == sepslash)
+            {
+                // move the slash over the period
+                --end;
+                memmove(ch, ch + 1, (size_t) (end - ch));
+                // since a slash was moved into this slot,
+                // back up to make sure it's not redundant
+                --ch;
+                continue;
+            }
+        }
+        else if(*ch == sepslash)
+        {
+            // remove redundant slashes
+            if(ch[1] == sepslash)
+            {
+                --end;
+                memmove(ch, ch + 1, (size_t) (end - ch));
+                continue;
+            }
+        }        
+        ++ch;
+    }    
 }
 
 //****************************************************************************
-static int32_t taa_path_findextoffset(
+static const char* taa_path_find_last_slash(
     const char* path)
 {
-    const char* sep = strrchr(path, taa_PATH_SLASH);
+    const char* slash = strrchr(path, taa_PATH_SLASH);
+    if(taa_PATH_SLASH != '/')
+    {
+        // on win32, slashes may exist in either direction
+        const char* fwdslash = strrchr(path, '/');
+        if(fwdslash > slash)
+        {
+            slash = fwdslash;
+        }
+    }
+    return slash;
+}
+
+//****************************************************************************
+static int taa_path_find_ext_offset(
+    const char* path)
+{
+    const char* sep = taa_path_find_last_slash(path);
     if(sep == NULL)
     {
         sep = path;
@@ -136,7 +195,7 @@ void taa_path_append(
             strncpy(pos, relpath, bufspace);
         }
         path[pathsize - 1] = '\0';
-        taa_path_clean(path);
+        taa_path_clean(path, taa_PATH_SLASH);
     }
     else
     {
@@ -145,16 +204,16 @@ void taa_path_append(
 }
 
 //****************************************************************************
-void taa_path_getbase(
+void taa_path_get_base(
     const char* path,
-    char* baseout,
+    char* base_out,
     uint32_t sz)
 {
     const char* sep;
     if(sz > 0)
     {
         int32_t ext;
-        sep = strrchr(path, taa_PATH_SLASH);
+        sep = taa_path_find_last_slash(path);
         if(sep != NULL)
         {
             ++sep;
@@ -165,20 +224,20 @@ void taa_path_getbase(
             // assume the string is a file name, not a directory name.
             sep = path;
         }
-        ext = taa_path_findextoffset(path);
+        ext = taa_path_find_ext_offset(path);
         if(ext >= 0)
         {
             sz = ext;
         }
-        strncpy(baseout, sep, sz);
-        baseout[sz - 1] = '\0';
+        strncpy(base_out, sep, sz);
+        base_out[sz - 1] = '\0';
     }
 }
 
 //****************************************************************************
-void taa_path_getdir(
+void taa_path_get_dir(
     const char* path,
-    char* dirout,
+    char* dir_out,
     uint32_t sz)
 {
     const char* sep;
@@ -186,46 +245,46 @@ void taa_path_getdir(
 
     if(sz > 0)
     {
-        dirout[0] = '\0';
-        sep = strrchr(path, taa_PATH_SLASH);
+        dir_out[0] = '\0';
+        sep = taa_path_find_last_slash(path);
         if(sep != NULL)
         {
             end = ((uint32_t) (sep - path)) + 1;
             sz = (sz > end) ? end : sz;
-            strncpy(dirout, path, sz - 1);
-            dirout[sz - 1] = '\0';
+            strncpy(dir_out, path, sz - 1);
+            dir_out[sz - 1] = '\0';
         }
     }
 }
 
 //****************************************************************************
-void taa_path_getext(
+void taa_path_get_ext(
     const char* path,
-    char* extout,
+    char* ext_out,
     uint32_t sz)
 {
     if(sz > 0)
     {
-        int32_t offset = taa_path_findextoffset(path);
-        extout[0] = '\0';
+        int32_t offset = taa_path_find_ext_offset(path);
+        ext_out[0] = '\0';
         if(offset >= 0)
         {
-            strncpy(extout, path + offset, sz - 1);
-            extout[sz - 1] = '\0';
+            strncpy(ext_out, path + offset, sz - 1);
+            ext_out[sz - 1] = '\0';
         }
     }
 }
 
 //****************************************************************************
-void taa_path_getfile(
+void taa_path_get_file(
     const char* path,
-    char* fileout,
+    char* file_out,
     uint32_t sz)
 {
     const char* sep;
     if(sz > 0)
     {
-        sep = strrchr(path, taa_PATH_SLASH);
+        sep = taa_path_find_last_slash(path);
         if(sep != NULL)
         {
             ++sep;
@@ -236,13 +295,13 @@ void taa_path_getfile(
             // assume the string is a file name, not a directory name.
             sep = path;
         }
-        strncpy(fileout, sep, sz);
-        fileout[sz - 1] = '\0';
+        strncpy(file_out, sep, sz);
+        file_out[sz - 1] = '\0';
     }
 }
 
 //****************************************************************************
-int32_t taa_path_isabsolute(
+int32_t taa_path_is_absolute(
     const char* path)
 {
     int32_t result;
@@ -265,22 +324,22 @@ int32_t taa_path_isabsolute(
 
 //****************************************************************************
 void taa_path_set(
-    char* pathout,
+    char* path,
     uint32_t pathsize,
     const char* src)
 {
-    strncpy(pathout, src, pathsize - 1);
-    pathout[pathsize - 1] = '\0';
-    taa_path_clean(pathout);
+    strncpy(path, src, pathsize - 1);
+    path[pathsize - 1] = '\0';
+    taa_path_clean(path, taa_PATH_SLASH);
 }
 
 //****************************************************************************
-void taa_path_setext(
+void taa_path_set_ext(
     char* path,
     uint32_t pathsize,
     const char* ext)
 {
-    int32_t offset = taa_path_findextoffset(path);
+    int32_t offset = taa_path_find_ext_offset(path);
     if(offset < 0)
     {
         offset = strlen(path);

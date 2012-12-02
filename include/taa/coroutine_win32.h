@@ -1,15 +1,12 @@
 /**
- * @brief     coroutine management header for win32
+ * @brief     coroutine header for win32 target
  * @author    Thomas Atwood (tatwood.net)
  * @date      2011
  * @copyright unlicense / public domain
  ****************************************************************************/
-#ifndef TAA_COROUTINE_WIN32_H_
-#define TAA_COROUTINE_WIN32_H_
+#ifndef taa_COROUTINE_WIN32_H_
+#define taa_COROUTINT_WIN32_H_
 
-struct taa_coroutine_s
-{
-    void* win32;
-};
+typedef HANDLE taa_coroutine_target;
 
-#endif // TAA_COROUTINE_WIN32_H_
+#endif // taa_COROUTINE_WIN32_H_

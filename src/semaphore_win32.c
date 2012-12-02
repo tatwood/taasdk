@@ -5,34 +5,37 @@
  * @copyright unlicense / public domain
  ****************************************************************************/
 // only compile when included by semaphore.c
-#ifdef TAA_SEMAPHORE_C_
+#ifdef taa_SEMAPHORE_C_
+#include <taa/semaphore.h>
 
 //****************************************************************************
-void taa_semaphore_create(
-    taa_semaphore* sem)
+int taa_semaphore_create(
+    taa_semaphore* sem_out)
 {
-    sem->win32 = CreateSemaphore(NULL, 0, 0x7FFFFFFF, NULL);
+    HANDLE h = CreateSemaphore(NULL, 0, 0x7FFFFFFF, NULL);
+    *sem_out = h;
+    return (h != NULL) ? 0 : -1;
 }
 
 //****************************************************************************
-void taa_semaphore_destroy(
+int taa_semaphore_destroy(
     taa_semaphore* sem)
 {
-    CloseHandle(sem->win32);
+    return (CloseHandle(*sem) != 0) ? 0 : -1;
 }
 
 //****************************************************************************
-void taa_semaphore_post(
+int taa_semaphore_post(
     taa_semaphore* sem)
 {
-    ReleaseSemaphore(sem->win32, 1, NULL);
+    return (ReleaseSemaphore(*sem, 1, NULL) != 0) ? 0 : -1;
 }
 
 //****************************************************************************
-void taa_semaphore_wait(
+int taa_semaphore_wait(
     taa_semaphore* sem)
 {
-    WaitForSingleObject(sem->win32, INFINITE);
+    return (WaitForSingleObject(*sem, INFINITE) != WAIT_FAILED) ? 0 : -1;
 }
 
-#endif // TAA_SEMAPHORE_C_
+#endif // taa_SEMAPHORE_C_

@@ -5,36 +5,37 @@
  * @copyright unlicense / public domain
  ****************************************************************************/
 // only compile when included by semaphore.c
-#ifdef TAA_SEMAPHORE_C_
-
+#ifdef taa_SEMAPHORE_C_
+#include <taa/semaphore.h>
 #include <pthread.h>
+#include <stdlib.h>
 
 //****************************************************************************
-void taa_semaphore_create(
-    taa_semaphore* sem)
+int taa_semaphore_create(
+    taa_semaphore* sem_out)
 {
-    sem_init(&sem->posix, PTHREAD_PROCESS_PRIVATE, 0);
+    return sem_init(sem_out, PTHREAD_PROCESS_PRIVATE, 0);
 }
 
 //****************************************************************************
-void taa_semaphore_destroy(
+int taa_semaphore_destroy(
     taa_semaphore* sem)
 {
-    sem_destroy(&sem->posix);
+    return sem_destroy(sem);
 }
 
 //****************************************************************************
-void taa_semaphore_post(
+int taa_semaphore_post(
     taa_semaphore* sem)
 {
-    sem_post(&sem->posix);
+    return sem_post(sem);
 }
 
 //****************************************************************************
-void taa_semaphore_wait(
+int taa_semaphore_wait(
     taa_semaphore* sem)
 {
-    sem_wait(&sem->posix);
+    return sem_wait(sem);
 }
+#endif // taa_SEMAPHORE_C_
 
-#endif // TAA_SEMAPHORE_C_

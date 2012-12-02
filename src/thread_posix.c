@@ -5,55 +5,32 @@
  * @copyright unlicense / public domain
  ****************************************************************************/
 // only compile when included by thread.c
-#ifdef TAA_THREAD_C_
-
-#include <poll.h>
+#ifdef taa_THREAD_C_
+#include <taa/thread.h>
 #include <sched.h>
-#include <stdlib.h>
-
-typedef struct taa_thread_args_s taa_thread_args;
-
-struct taa_thread_args_s
-{
-    taa_thread_func func;
-    void* args;
-};
+#include <unistd.h>
 
 //****************************************************************************
-static void* taa_thread_wrapper(
-    void* args)
-{
-    taa_thread_args targs = *((taa_thread_args*) args);
-    free(args);
-    return (void*) targs.func(targs.args);
-}
-
-//****************************************************************************
-void taa_thread_create(
+int taa_thread_create(
     taa_thread_func func,
     void* args,
-    taa_thread* tout)
+    taa_thread* t_out)
 {
-    taa_thread_args* targs = (taa_thread_args*) malloc(sizeof(*targs));
+    int32_t err = 0;
     pthread_attr_t attr;
-
-    targs->func = func;
-    targs->args = args;
-
     pthread_attr_init(&attr);
     pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
-    pthread_create(&tout->posix, &attr, taa_thread_wrapper, targs);
+    err = pthread_create(
+        (pthread_t*) t_out,
+        &attr,
+        (void *(*)(void*)) func,
+        args);
     pthread_attr_destroy(&attr);
+    return err;
 }
 
 //****************************************************************************
-taa_thread_id taa_thread_currentid()
-{
-    return (taa_thread_id) pthread_self();
-}
-
-//****************************************************************************
-int32_t taa_thread_equal(
+int taa_thread_equal(
     taa_thread_id a,
     taa_thread_id b)
 {
@@ -61,32 +38,29 @@ int32_t taa_thread_equal(
 }
 
 //****************************************************************************
+#if 0
+// no windows equivalent exists pre-vista
 taa_thread_id taa_thread_getid(
-    taa_thread* t)
+    taa_thread t)
 {
-    return (taa_thread_id) t->posix;
+    return (taa_thread_id) t;
 }
+#endif
 
 //****************************************************************************
-int32_t taa_thread_join(
-    taa_thread* t)
+taa_thread_result taa_thread_join(
+    taa_thread t)
 {
     void* ret;
-    pthread_join(t->posix, &ret);
-    return (int32_t) ret;
+    pthread_join((pthread_t) t, &ret);
+    return (taa_thread_result) ret;
 }
 
 //****************************************************************************
-void taa_thread_sleep(
-    uint32_t ms)
+taa_thread_id taa_thread_self()
 {
-    poll(NULL, 0, ms);
+    return (taa_thread_id) pthread_self();
 }
 
-//****************************************************************************
-void taa_thread_yield()
-{
-    sched_yield();
-}
+#endif // taa_THREAD_C_
 
-#endif // TAA_THREAD_C_

@@ -1,13 +1,13 @@
 /**
- * @brief     target agnostic header for handling mouse input
+ * @brief     target agnostic header for mouse input
  * @author    Thomas Atwood (tatwood.net)
  * @date      2011
  * @copyright unlicense / public domain
  ****************************************************************************/
-#ifndef TAA_MOUSE_H_
-#define TAA_MOUSE_H_
+#ifndef taa_MOUSE_H_
+#define taa_MOUSE_H_
 
-#include "stdint.h"
+#include "window.h"
 
 typedef struct taa_mouse_state_s taa_mouse_state;
 
@@ -15,13 +15,25 @@ struct taa_mouse_state_s
 {
     int32_t cursorx;
     int32_t cursory;
-    /// left button
-    int16_t button1;
-    /// middle button
-    int16_t button2;
-    /// right button
-    int16_t button3;
-    int16_t padding;
+    int8_t button1;
+    int8_t button2;
+    int8_t button3;
 };
 
-#endif // TAA_MOUSE_H_
+//****************************************************************************
+// functions
+
+taa_SDK_LINKAGE void taa_mouse_query(
+    taa_window_display disp,
+    taa_window win,
+    taa_mouse_state* mouse_out);
+
+/**
+ * updates an existing mouse state based on a set of window events
+ */
+taa_SDK_LINKAGE void taa_mouse_update(
+    const taa_window_event* events,
+    uint32_t numevents,
+    taa_mouse_state* mouse);
+
+#endif // taa_MOUSE_H_

@@ -10,7 +10,7 @@
 //****************************************************************************
 // returns the index into the uri marking the beginning of the
 // fragment substring. If no fragment exists, the result will be < 0.
-static int32_t taa_uri_findfragmentoffset(
+static int32_t taa_uri_find_fragment_offset(
     const char* uri)
 {
     const char* s = strchr(uri, '#');
@@ -20,7 +20,7 @@ static int32_t taa_uri_findfragmentoffset(
 //****************************************************************************
 // returns the index into the uri marking the beginning of the host
 // substring. If no host exists, the result will be < 0.
-static int32_t taa_uri_findhostoffset(
+static int32_t taa_uri_find_host_offset(
     const char* uri)
 {
     const char* s = strstr(uri, "://");
@@ -30,14 +30,13 @@ static int32_t taa_uri_findhostoffset(
 //****************************************************************************
 // returns the index into the uri marking the beginning of the path
 // substring. If no path exists, the result will be < 0.
-static int32_t taa_uri_findpathoffset(
+static int32_t taa_uri_find_path_offset(
     const char* uri)
 {
     int32_t p;
     const char* s;
-
     // get the location of the host in the uri
-    p = taa_uri_findhostoffset(uri);
+    p = taa_uri_find_host_offset(uri);
     if(p >= 0)
     {
         // If the host exists, find the next '/'
@@ -61,99 +60,28 @@ static int32_t taa_uri_findpathoffset(
 }
 
 //****************************************************************************
-static void taa_uri_cleanpath(
+static void taa_uri_clean_path(
     char* uri)
 {
     int32_t p;
-    char* path;
-    char* ch;
-    int32_t off;
-
-    p = taa_uri_findpathoffset(uri);
+    p = taa_uri_find_path_offset(uri);
     if(p >= 0)
     {
-        path = uri + p;
-        ch = path;
-        while(*ch != '\0' && *ch != '#')
-        {
-            if(*ch == '.')
-            {
-                if(ch[1] == '.')
-                {
-                    // move up to the parent folder
-                    if(ch == path)
-                    {
-                        // if the '..' sequence is at the beginning of
-                        // the path, leave it in place.
-                        ch += 2;
-                        continue;
-                    }
-                    off = ((int32_t) (ch - path)) - 1;
-                    if(off > 0)
-                    {
-                        --off;
-                        if(off > 0 && path[off] == '/')
-                        {
-                            --off;
-                        }
-                        while(off > 0 && path[off] != '/')
-                        {
-                            --off;
-                        }
-                    }
-                    if(off == 0)
-                    {
-                        ++ch;
-                    }
-                    strcpy(path + off, ch + 2);
-                    ch = path + off;
-                    continue;
-                }
-                else if(ch[1] == '/')
-                {
-                    // referencing the current folder
-                    if(ch == path)
-                    {
-                        // if the './' sequence is at the beginning of
-                        // the path, leave it in place.
-                        ++ch;
-                    }
-                    else
-                    {
-                        // since a slash was moved into this slot,
-                        // back up to make sure it's not redundant
-                        --ch;
-                    }
-                    continue;
-                }
-            }
-            else if(*ch == '/')
-            {
-                // remove redundant slashes
-                if(ch[1] == '/' || ch[1] == '\\')
-                {
-                    strcpy(ch, ch + 1);
-                    continue;
-                }
-            }
-            else if(*ch == '\\')
-            {
-                // convert back slashes to forward slashes.
-                *ch = '/';
-                continue;
-            }
-            ++ch;
-        }
+        void taa_path_clean(char* path, char sepslash);
+        char* path = uri + p;
+        taa_path_clean(path, '/');
         if(*path == '/')
         {
             // if the path begins with '/', it is redundant, get rid of it
-            strcpy(path, path + 1);
+            // subtract one from strlen for the '/' being removed,
+            // and add one for the null terminator
+            memmove(path, path + 1, strlen(path));
         }
     }
 }
 
 //****************************************************************************
-void taa_uri_appendpath(
+void taa_uri_append_path(
     char* uri,
     uint32_t urisize,
     const char* rel_path)
@@ -162,13 +90,13 @@ void taa_uri_appendpath(
     int32_t f;
     uint32_t len;
     char* path;
-    char s[taaURI_SIZE];
+    char s[taa_URI_SIZE];
 
     if(rel_path[0] != '\0')
     {
         // find the beginning of the fragment in the existing string
         // and make a back up copy
-        f = taa_uri_findfragmentoffset(uri);
+        f = taa_uri_find_fragment_offset(uri);
         strcpy(s, uri);
 
         // chop off the fragment from the string
@@ -178,13 +106,13 @@ void taa_uri_appendpath(
         }
         // find the beginning of the path in the existing string.
         // The path should not write over anything before this.
-        p = taa_uri_findpathoffset(uri);
+        p = taa_uri_find_path_offset(uri);
         path = uri;
         if(p < 0)
         {
             // If a path doesn't exist, create one.
             p = (int32_t) strlen(uri);
-            p = (p + 1 < taaURI_SIZE) ? p : 0;
+            p = (p + 1 < taa_URI_SIZE) ? p : 0;
             uri[p] = '/';
             ++p;
             uri[p] = '\0';
@@ -213,14 +141,14 @@ void taa_uri_appendpath(
             strncpy(uri + len + 1, s + f, urisize - (len + 1));
         }
 
-        taa_uri_cleanpath(uri);
+        taa_uri_clean_path(uri);
     }
 }
 
 //****************************************************************************
-void taa_uri_getextension(
+void taa_uri_get_extension(
     const char* uri,
-    char* extout,
+    char* ext_out,
     uint32_t size)
 {
     int32_t p;
@@ -228,51 +156,51 @@ void taa_uri_getextension(
     uint32_t extLen;
     const char* dot;
 
-    p = taa_uri_findpathoffset(uri);
+    p = taa_uri_find_path_offset(uri);
     if(p >= 0)
     {
         dot = strchr(uri + p, '.');
         if(dot != NULL)
         {
             p = ((int32_t) (dot - uri)) + 1;
-            f = taa_uri_findfragmentoffset(uri);
+            f = taa_uri_find_fragment_offset(uri);
             if(f > p)
             {
                 extLen = f - p;
                 size = (extLen < size) ? extLen : size;
             }
-            strncpy(extout, uri + p, size);
+            strncpy(ext_out, uri + p, size);
         }
         else if(size > 0)
         {
-            *extout = '\0';
+            *ext_out = '\0';
         }
     }
     else if(size > 0)
     {
-        *extout = '\0';
+        *ext_out = '\0';
     }
     if(size > 0)
     {
-        extout[size - 1] = '\0';
+        ext_out[size - 1] = '\0';
     }
 }
 
 //****************************************************************************
-void taa_uri_getfilename(
+void taa_uri_get_filename(
     const char* uri,
-    char* fileout,
+    char* file_out,
     uint32_t size)
 {
     int32_t p;
     int32_t f;
     uint32_t pathLen;
     const char* slash;
-
-    p = taa_uri_findpathoffset(uri);
+    p = taa_uri_find_path_offset(uri);
+    
     if(p >= 0)
     {
-        f = taa_uri_findfragmentoffset(uri);
+        f = taa_uri_find_fragment_offset(uri);
         if(f > p)
         {
             slash = strchr(uri + p, '/');
@@ -294,58 +222,58 @@ void taa_uri_getfilename(
                 p = ((int32_t) (slash - uri)) + 1;
             }
         }
-        strncpy(fileout, uri + p, size);
+        strncpy(file_out, uri + p, size);
     }
     else if(size > 0)
     {
-        *fileout = '\0';
+        *file_out = '\0';
     }
     if(size > 0)
     {
-        fileout[size - 1] = '\0';
+        file_out[size - 1] = '\0';
     }
 }
 
 //****************************************************************************
-void taa_uri_getfragment(
+void taa_uri_get_fragment(
     const char* uri,
-    char* fragmentout,
+    char* fragment_out,
     uint32_t size)
 {
     int32_t f;
 
-    f = taa_uri_findfragmentoffset(uri);
+    f = taa_uri_find_fragment_offset(uri);
     if(f >= 0)
     {
-        strncpy(fragmentout, uri + f, size);
+        strncpy(fragment_out, uri + f, size);
     }
     else if(size > 0)
     {
-        *fragmentout = '\0';
+        *fragment_out = '\0';
     }
     if(size > 0)
     {
-        fragmentout[size - 1] = '\0';
+        fragment_out[size - 1] = '\0';
     }
 }
 
 //****************************************************************************
-void taa_uri_gethost(
+void taa_uri_get_host(
     const char* uri,
-    char* hostout,
+    char* host_out,
     uint32_t size)
 {
     int32_t h;
     int32_t p;
     uint32_t hostLen;
 
-    h = taa_uri_findhostoffset(uri);
+    h = taa_uri_find_host_offset(uri);
     if(h >= 0)
     {
-        p = taa_uri_findpathoffset(uri);
+        p = taa_uri_find_path_offset(uri);
         if(p < 0)
         {
-            p = taa_uri_findfragmentoffset(uri);
+            p = taa_uri_find_fragment_offset(uri);
         }
         if(p > h)
         {
@@ -353,111 +281,121 @@ void taa_uri_gethost(
             // and add one for the null terminator
             hostLen = p - h;
             size = (hostLen < size) ? hostLen : size;
-            strncpy(hostout, uri + h, size);
+            strncpy(host_out, uri + h, size);
         }
         else
         {
-            strncpy(hostout, uri + h, size);
+            strncpy(host_out, uri + h, size);
         }
     }
     else if(size > 0)
     {
-        *hostout = '\0';
+        *host_out = '\0';
     }
     if(size > 0)
     {
-        hostout[size - 1] = '\0';
+        host_out[size - 1] = '\0';
     }
 }
 
 //****************************************************************************
-void taa_uri_getpath(
+void taa_uri_get_path(
     const char* uri,
-    char* pathout,
+    char* path_out,
     uint32_t size)
 {
-    int32_t p;
-    int32_t f;
-    uint32_t pathLen;
-
-    p = taa_uri_findpathoffset(uri);
+    int32_t p = taa_uri_find_path_offset(uri);
+    if(strncmp(uri,"file://",7) == 0)
+    {
+        // check for a malformed windows file uri of the form:
+        // 'file://c:/dir/file.txt'
+        char drv = uri[7];
+        if((drv >= 'A' && drv <= 'Z') || (drv >= 'a' && drv <= 'z'))
+        {
+            if(uri[8] == ':')
+            {
+                p = 7;
+            }
+        }
+    }
     if(p >= 0)
     {
-        f = taa_uri_findfragmentoffset(uri);
+        // truncate fragment from the path
+        int32_t f = taa_uri_find_fragment_offset(uri);
         if(f > p)
         {
             // subtract one for the '#' separator,
             // and add one for the null terminator
-            pathLen = f - p;
-            size = (pathLen < size) ? pathLen : size;
+            uint32_t pathlen = f - p;
+            size = (pathlen < size) ? pathlen : size;
         }
-        strncpy(pathout, uri + p, size);
+        strncpy(path_out, uri + p, size);
     }
     else if(size > 0)
     {
-        *pathout = '\0';
+        *path_out = '\0';
     }
     if(size > 0)
     {
-        pathout[size - 1] = '\0';
+        path_out[size - 1] = '\0';
     }
 }
 
 //****************************************************************************
-void taa_uri_getprotocol(
+void taa_uri_get_scheme(
     const char* uri,
-    char* protocolout,
+    char* scheme_out,
     uint32_t size)
 {
     int32_t h;
-    uint32_t protocolLen;
+    uint32_t scheme_len;
 
-    h = taa_uri_findhostoffset(uri);
+    h = taa_uri_find_host_offset(uri);
     if(h >= 0)
     {
         // subtract three for the '://' separator,
         // and add one for the null terminator
-        protocolLen = h - 3 + 1;
-        size = (protocolLen < size) ? protocolLen : size;
-        strncpy(protocolout, uri, size);
+        scheme_len = h - 3 + 1;
+        size = (scheme_len < size) ? scheme_len : size;
+        strncpy(scheme_out, uri, size);
     }
     else if(size > 0)
     {
-        *protocolout = '\0';
+        *scheme_out = '\0';
     }
     if(size > 0)
     {
-        protocolout[size - 1] = '\0';
+        scheme_out[size - 1] = '\0';
     }
 }
 
 //****************************************************************************
 void taa_uri_set(
-    const char* s,
-    char* uriout,
-    uint32_t urisize)
+    char* uri,
+    uint32_t urisize,
+    const char* src)
 {
-    if(s != NULL)
+    if(src != NULL)
     {
-        strncpy(uriout, s, urisize - 1);
-        uriout[urisize - 1] = '\0';
+        strncpy(uri, src, urisize - 1);
+        uri[urisize - 1] = '\0';
     }
     else
     {
-        uriout[0] = '\0';
+        uri[0] = '\0';
     }
-    taa_uri_cleanpath(uriout);
+    taa_uri_clean_path(uri);
 }
 
 //****************************************************************************
-void taa_uri_setfragment(
+void taa_uri_set_fragment(
     char* uri,
     uint32_t urisize,
     const char* fragment)
 {
     int32_t f;
 
-    f = taa_uri_findfragmentoffset(uri);
+    f = taa_uri_find_fragment_offset(uri);
     if(fragment[0] == '#')
     {
         // If the new fragment contains its own '#', skip past it
@@ -488,7 +426,7 @@ void taa_uri_setfragment(
 }
 
 //****************************************************************************
-void taa_uri_sethost(
+void taa_uri_set_host(
     char* uri,
     uint32_t urisize,
     const char* host)
@@ -497,20 +435,19 @@ void taa_uri_sethost(
     int32_t p;
     int32_t f;
     int32_t len;
-    char s[taaURI_SIZE];
-
-    // Get the beginning and ending of the host in the string and make
+    char s[taa_URI_SIZE];
+    // get the beginning and ending of the host in the string and make
     // a back up copy
-    h = taa_uri_findhostoffset(uri);
-    p = taa_uri_findpathoffset(uri);
-    f = taa_uri_findfragmentoffset(uri);
+    h = taa_uri_find_host_offset(uri);
+    p = taa_uri_find_path_offset(uri);
+    f = taa_uri_find_fragment_offset(uri);
     strcpy(s, uri);
 
     len = (int32_t) strlen(host);
     if(h < 0)
     {
-        // If no separator between the host and protocol exists,
-        // the protocol has not been set yet either, so add the separator
+        // If no separator between the host and scheme exists,
+        // the scheme has not been set yet either, so add the separator
         // to the beginning of the string.
         strncpy(uri, "://", urisize);
         h = 3;
@@ -539,7 +476,7 @@ void taa_uri_sethost(
 }
 
 //****************************************************************************
-void taa_uri_setpath(
+void taa_uri_set_path(
     char* uri,
     uint32_t urisize,
     const char* path)
@@ -547,11 +484,11 @@ void taa_uri_setpath(
     int32_t p;
     int32_t f;
 
-    p = taa_uri_findpathoffset(uri);
+    p = taa_uri_find_path_offset(uri);
     if(p >= 0)
     {
         // Chop off the old path
-        f = taa_uri_findfragmentoffset(uri);
+        f = taa_uri_find_fragment_offset(uri);
         if(f > p)
         {
             // If a fragment exists, move it over where the original
@@ -567,27 +504,27 @@ void taa_uri_setpath(
     }
 
     // Insert the new path
-    taa_uri_appendpath(uri, urisize, path);
+    taa_uri_append_path(uri, urisize, path);
 }
 
 //****************************************************************************
-void taa_uri_setprotocol(
+void taa_uri_set_scheme(
     char* uri,
     uint32_t urisize,
-    const char* protocol)
+    const char* scheme)
 {
     int32_t h;
     int32_t len;
-    char s[taaURI_SIZE];
+    char s[taa_URI_SIZE];
 
-    // Get the beginning and ending of the host in the string and make
+    // get the beginning and ending of the host in the string and make
     // a back up copy
-    h = taa_uri_findhostoffset(uri);
+    h = taa_uri_find_host_offset(uri);
     strcpy(s, uri);
 
-    // copy the new protocol int32_to the uri and insert the separator
-    len = (int32_t) strlen(protocol);
-    strncpy(uri, protocol, urisize);
+    // copy the new scheme int32_to the uri and insert the separator
+    len = (int32_t) strlen(scheme);
+    strncpy(uri, scheme, urisize);
     strncpy(uri + len, "://",  urisize - len);
     len += 3;
 

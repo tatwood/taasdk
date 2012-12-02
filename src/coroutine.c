@@ -4,9 +4,7 @@
  * @date      2011
  * @copyright unlicense / public domain
  ****************************************************************************/
-#include <taa/coroutine.h>
-
-#define TAA_COROUTINE_C_
+#define taa_COROUTINE_C_
 
 #ifdef WIN32
 #include "coroutine_win32.c"
@@ -14,4 +12,4 @@
 #include "coroutine_other.c"
 #endif
 
-#undef TAA_COROUTINE_C_
+#undef taa_COROUTINE_C_
