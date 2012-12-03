@@ -1,3 +1,9 @@
+/**
+ * @brief     timer header
+ * @author    Thomas Atwood (tatwood.net)
+ * @date      2011
+ * @copyright unlicense / public domain
+ ****************************************************************************/
 #ifndef taa_TIMER_H_
 #define taa_TIMER_H_
 

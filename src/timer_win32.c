@@ -32,6 +32,10 @@ int64_t taa_timer_sample_monotonic()
     static uint64_t s_inittime = 0;
     static uint64_t s_rollover = 0;
     uint64_t ticks = GetTickCount() + s_rollover;
+    if(s_inittime == 0)
+    {
+        s_inittime = ticks;
+    }
     if(ticks < s_inittime)
     {
         // NOTE: this is not thread safe
